@@ -77,8 +77,9 @@ section.open .gbody{display:block}
 .chk{width:44px;height:44px;border-radius:14px;border:1.5px solid var(--line);background:transparent;color:var(--ok);font-size:1.1rem;flex:none}
 .item.done .chk{background:linear-gradient(135deg,#2bb87f,#3ecf8e);border-color:transparent;color:#0d1420}
 .half{width:44px;height:44px;border-radius:14px;border:1.5px dashed var(--line);background:transparent;color:var(--mut);font-size:.7rem;flex:none}
-.subrow{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
-.subrow button{font-size:.7rem;border:1px solid var(--line);border-radius:10px;padding:7px 11px;background:transparent;color:var(--mut)}
+.subrow{display:flex;flex-direction:column;gap:7px;margin-top:9px}
+.subrow button{display:flex;align-items:center;gap:8px;font-size:.78rem;border:1px solid var(--line);border-radius:12px;padding:11px 13px;background:transparent;color:var(--mut);min-height:44px;text-align:left}
+.subrow button .sp{margin-left:auto;font-weight:700}
 .subrow button.on{background:rgba(62,207,142,.18);border-color:rgba(62,207,142,.5);color:var(--ok)}
 .mg{display:flex;gap:7px;margin-top:8px}
 .mg button{font-size:.7rem;border:1px solid var(--line);border-radius:10px;padding:6px 11px;color:var(--mut);background:transparent}
@@ -100,7 +101,7 @@ section.open .gbody{display:block}
 .pill.done{border-color:rgba(62,207,142,.55);color:var(--ok);opacity:.6}
 
 .ctr-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.ctr{background:var(--card2);border:1px solid var(--line);border-radius:16px;padding:14px;text-align:left;position:relative;display:flex;flex-direction:column}
+.ctr{background:var(--card2);border:1px solid var(--line);border-radius:16px;padding:14px 60px 14px 14px;text-align:left;position:relative;display:flex;flex-direction:column}
 .ctr .cnum{font-size:1.5rem;font-weight:800}
 .ctr .cnum em{font-style:normal;font-size:.7rem;color:var(--mut);font-weight:500}
 .ctr .ctitle{display:block;font-size:.82rem;font-weight:700;margin-top:8px}
@@ -109,6 +110,7 @@ section.open .gbody{display:block}
 .ctr.limit-warn{border-color:rgba(242,184,75,.6)}
 .ctr.limit-bad{border-color:rgba(246,109,109,.65)}
 .ctr .plus{position:absolute;right:11px;top:11px;width:38px;height:38px;border-radius:12px;background:var(--line);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.05rem}
+.ctr .minus{position:absolute;right:11px;top:56px;width:38px;height:38px;border-radius:12px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.05rem;color:var(--mut)}
 
 .badge{font-size:.6rem;font-weight:800;border-radius:7px;padding:2px 7px;letter-spacing:.03em}
 .badge.muss{background:rgba(246,109,109,.18);color:var(--bad);border:1px solid rgba(246,109,109,.4)}
@@ -135,7 +137,7 @@ section.open .gbody{display:block}
 .chips{display:flex;flex-wrap:wrap;gap:7px;margin:4px 0 2px}
 .chips button{border:1px solid var(--line);background:var(--card2);border-radius:12px;padding:12px 15px;font-size:.8rem;min-height:44px}
 .chips button.sel{background:linear-gradient(115deg,#3ecf8e,#6dd3e0);color:#0d1420;font-weight:700;border-color:transparent}
-input[type=text],input[type=number]{width:100%;background:#0b111c;border:1px solid var(--line);border-radius:12px;color:var(--txt);padding:11px 12px;font-family:inherit;font-size:.85rem;margin-top:4px}
+input[type=text],input[type=number],textarea{width:100%;background:#0b111c;border:1px solid var(--line);border-radius:12px;color:var(--txt);padding:11px 12px;font-family:inherit;font-size:.85rem;margin-top:4px;resize:none}
 .preview{display:flex;align-items:center;justify-content:space-between;background:linear-gradient(115deg,rgba(62,207,142,.12),rgba(109,211,224,.08));border:1px solid rgba(62,207,142,.4);border-radius:14px;padding:12px 14px;margin-top:12px}
 .preview b{font-size:1.3rem;color:var(--ok)}
 .save{width:100%;border:none;border-radius:15px;padding:14px;font-size:.9rem;font-weight:800;color:#0d1420;background:linear-gradient(115deg,#3ecf8e,#6dd3e0);margin-top:8px}
@@ -247,12 +249,16 @@ input[type=text],input[type=number]{width:100%;background:#0b111c;border:1px sol
     <div class="chips" id="fK"></div>
     <h2>⚡ Energie</h2>
     <div class="chips" id="fE"></div>
+    <div id="fFreqWrap">
+      <h2>🔁 Häufigkeit</h2>
+      <div class="chips" id="fFreq"></div>
+    </div>
     <div id="fWichtWrap">
       <h2>🎯 Wichtigkeit <span class="small">(steuert den Schiebe-Malus)</span></h2>
       <div class="chips" id="fWicht"></div>
     </div>
-    <h2>Unteraufgaben <span class="small">(mit · trennen — je Schritt +1 P Belohnung)</span></h2>
-    <input type="text" id="fSubs" placeholder="Schritt 1 · Schritt 2 · …">
+    <h2>Unteraufgaben <span class="small">(eine pro Zeile — je Schritt +1 P Belohnung)</span></h2>
+    <textarea id="fSubs" rows="3" placeholder="Ein Schritt pro Zeile"></textarea>
     <div class="preview"><span>Punkte nach Formel<br><span class="small">Min ÷ 5 × K × E — nicht frei wählbar</span></span><b id="fPts">0 P</b></div>
   </div>
   <div class="card" id="tplCard">
@@ -321,7 +327,7 @@ input[type=text],input[type=number]{width:100%;background:#0b111c;border:1px sol
   <button class="finishbtn" id="finishBtn" onclick="openFinish()">🌇 Tag abschließen</button>
   <div class="tabs">
     <button class="on" data-v="home" onclick="show('home',this)">🏠 Heute</button>
-    <button data-v="neu" onclick="show('neu',this)">＋ Neu</button>
+    <button data-v="neu" onclick="startNew(this)">＋ Neu</button>
     <button data-v="stats" onclick="show('stats',this)">📈</button>
     <button data-v="set" onclick="show('set',this)">⚙️</button>
   </div>
@@ -332,6 +338,7 @@ input[type=text],input[type=number]{width:100%;background:#0b111c;border:1px sol
   <div class="sheet-in">
     <h1 id="focName">—</h1>
     <div class="fsub" id="focSub"></div>
+    <div class="subrow" id="focSubs" style="text-align:left"></div>
     <div class="tacho">
       <svg width="230" height="230" viewBox="0 0 230 230">
         <defs><linearGradient id="tg" x1="0" y1="0" x2="1" y2="1">
@@ -420,7 +427,7 @@ const GROUPS=[
  {id:'queue',ico:'📋',name:'Warteschlange',open:true},
  {id:'morgen',ico:'🌅',name:'Morgenkette',chain:true,open:true},
  {id:'flex',ico:'🕐',name:'Flexibel · 1×/Tag',open:true},
- {id:'zwei',ico:'🔁',name:'Alle 2 Tage',open:true},
+ {id:'zwei',ico:'🔁',name:'Rhythmus',open:true},
  {id:'tag',ico:'☀️',name:'Tag · Zeitfenster',open:true},
  {id:'abend',ico:'🌆',name:'Abend',open:false},
  {id:'bett',ico:'🌙',name:'Bettroutine',chain:true,open:false}
@@ -514,13 +521,14 @@ function isToday(it){
 }
 function dueInfo(it){
   if(!it.every)return null;
+  const ev=it.every;
   const last=S.lastDone[it.id];
-  if(!last)return{cls:'b-warn',txt:'heute fällig',malus:0,bonus:false};
+  if(!last)return{cls:'b-warn',txt:'alle '+ev+' Tage · heute fällig',malus:0,bonus:false};
   const diff=Math.floor((new Date(todayStr())-new Date(last))/864e5);
   if(diff===0)return{cls:'b-ok',txt:'heute schon erledigt',malus:0,bonus:false};
-  if(diff===1)return{cls:'b-ok',txt:'gestern erledigt · morgen fällig',malus:0,bonus:true};
-  if(diff===2)return{cls:'b-warn',txt:'heute fällig',malus:0,bonus:false};
-  const over=diff-2,m=Math.round(over*2*S.set.malus);
+  if(diff<ev)return{cls:'b-ok',txt:'zuletzt vor '+diff+' T · fällig in '+(ev-diff)+' T',malus:0,bonus:true};
+  if(diff===ev)return{cls:'b-warn',txt:'heute fällig',malus:0,bonus:false};
+  const over=diff-ev,m=Math.round(over*2*S.set.malus);
   return{cls:'b-bad',txt:'⚠️ überfällig seit '+over+' Tag'+(over>1?'en':'')+' → Malus läuft',malus:m,bonus:false};
 }
 function chainLocked(it){return it.gr==='morgen'&&it.locked&&!S.day.checks['prep']}
@@ -541,9 +549,9 @@ function renderGroups(){
         const v=S.day.ticks[c.id]||0;
         if(c.ctype==='limit'){
           const cls=v>c.limit?'limit-bad':v===c.limit?'limit-warn':'limit-ok';
-          bodyHtml+=`<button class="ctr ${cls}" onclick="tick('${c.id}')"><span class="plus">+</span><span class="cnum mono">${v}<em> / ≤ ${c.limit}</em></span><span class="ctitle">${c.name}</span><span class="cmeta">gehalten +${ctrHoldPts(c)} · drüber −${c.malusTick}/Tick</span></button>`;
+          bodyHtml+=`<button class="ctr ${cls}" onclick="tick('${c.id}')"><span class="plus">+</span><span class="minus" onclick="event.stopPropagation();untick('${c.id}')">−</span><span class="cnum mono">${v}<em> / ≤ ${c.limit}</em></span><span class="ctitle">${c.name}</span><span class="cmeta">gehalten +${ctrHoldPts(c)} · drüber −${c.malusTick}/Tick</span></button>`;
         }else{
-          bodyHtml+=`<button class="ctr" style="grid-column:1/-1" onclick="tick('${c.id}')"><span class="plus">+</span><span class="cnum mono">${v}<em> Ticks</em></span><span class="ctitle">${c.name}</span><span class="cmeta">+${c.per} P je Tick · Morgen-Kaffee = Tick 1</span></button>`;
+          bodyHtml+=`<button class="ctr" style="grid-column:1/-1" onclick="tick('${c.id}')"><span class="plus">+</span><span class="minus" onclick="event.stopPropagation();untick('${c.id}')">−</span><span class="cnum mono">${v}<em> Ticks</em></span><span class="ctitle">${c.name}</span><span class="cmeta">+${c.per} P je Tick · Morgen-Kaffee = Tick 1</span></button>`;
         }
       }
       bodyHtml+='</div>';
@@ -601,7 +609,7 @@ function renderItem(it,done){
   if(it.mg){const cur=S.day.mg[it.id];
     extra+='<div class="mg">'+it.mg.map(m=>`<button class="${cur===m?'sel':''}" onclick="event.stopPropagation();setMg('${it.id}',${m})">${m} mg</button>`).join('')+'</div>';}
   if(it.subs){const st=S.day.subs[it.id]||[];
-    extra+='<div class="subrow">'+it.subs.map((s,i)=>`<button class="${st.includes(i)?'on':''}" onclick="event.stopPropagation();subTick('${it.id}',${i})">${s} +1</button>`).join('')+'</div>';}
+    extra+='<div class="subrow">'+it.subs.map((s,i)=>`<button class="${st.includes(i)?'on':''}" onclick="event.stopPropagation();subTick('${it.id}',${i})">${st.includes(i)?'✓':'○'} ${s}<span class="sp">+1</span></button>`).join('')+'</div>';}
   if(it.id==='fruehstueck'&&S.day.timers.elvanse&&!done)
     sub+=` <span class="timer"><span class="tdot"></span><span class="mono" id="t-elvanse">--:--</span> Elvanse-Fenster</span>`;
   if(it.deadline&&!done)sub+=` <span class="timer"><span class="tdot"></span>bis ${it.deadline}</span>`;
@@ -620,8 +628,8 @@ function subTick(id,i){
   if(st.includes(i))return;
   st.push(i);log(id,1,'substep',{step:i});toast('+1 P 🎉');
   const it=S.items.find(x=>x.id===id)||S.queue.find(x=>x.id===id);
-  if(it&&it.subs&&st.length===it.subs.length&&!S.day.checks[id]){doCheck(it,false,1,' · Abschluss +1')}
-  else renderGroups();
+  if(it&&it.subs&&st.length===it.subs.length&&!S.day.checks[id]){doCheck(it,false,1,' · Abschluss +1');if(focId===id)closeFocus(true)}
+  else{renderGroups();if(focId===id)renderFocusSubs()}
 }
 function check(id,half){
   const it=S.items.find(x=>x.id===id)||S.queue.find(x=>x.id===id);
@@ -672,8 +680,16 @@ function openFocus(id){
   $('#focName').textContent=it.name;
   $('#focSub').textContent='Soll: '+(it.min||'–')+' Min · '+calcPts(it)+' P';
   $('#focSoll').textContent='Soll '+(it.min||'–')+' Min';
+  renderFocusSubs();
   $('#focusSheet').classList.add('show');
   renderFocus();renderGroups();
+}
+function renderFocusSubs(){
+  const host=$('#focSubs');if(!host)return;
+  const it=S.items.find(x=>x.id===focId)||S.queue.find(x=>x.id===focId);
+  if(!it||!it.subs){host.innerHTML='';return}
+  const st=S.day.subs[it.id]||[];
+  host.innerHTML=it.subs.map((s,i)=>`<button class="${st.includes(i)?'on':''}" onclick="subTick('${it.id}',${i})">${st.includes(i)?'✓':'○'} ${s}<span class="sp">+1</span></button>`).join('');
 }
 function renderFocus(){
   if(!focId)return;
@@ -715,6 +731,16 @@ function tick(id){
   }
   save();renderGroups();
 }
+function untick(id){
+  const c=S.items.find(x=>x.id===id);
+  const v=S.day.ticks[id]||0;
+  if(!c||v===0)return;
+  if(c.ctype==='build'){log(id,-c.per,'tick-undo')}
+  else if(v>c.limit){log(id,Math.round(c.malusTick*S.set.malus),'tick-undo')}
+  else{log(id,0,'tick-undo')}
+  S.day.ticks[id]=v-1;
+  save();toast('↩︎ '+c.name+' zurück auf '+(v-1));renderGroups();
+}
 
 /* ---------- Warteschlange ---------- */
 function renderQueue(){
@@ -731,11 +757,11 @@ function renderQueue(){
       <div class="iname">${q.name} <span class="badge ${q.w}">${q.w.toUpperCase()}</span>${q.fromTpl?' <span class="bonus">📋 Vorlage</span>':''}${runChip(q.id)}
       <span class="isub">${q.min} Min · ${q.k} · ${q.e} → ${calcPts(q)} P</span>
       ${pd?`<span class="malus">${pd}× geschoben · Malus −${mal} P (−${rate*100} %/Tag)</span>`:''}
-      ${q.subs?'<div class="subrow">'+q.subs.map((s,i)=>`<button class="${(S.day.subs[q.id]||[]).includes(i)?'on':''}" onclick="event.stopPropagation();subTick('${q.id}',${i})">${s} +1</button>`).join('')+'</div>':''}
-      ${done?'':`<div class="qact"><button onclick="event.stopPropagation();pushTask('${q.id}')">→ schieben</button></div>`}
+      ${q.subs?'<div class="subrow">'+q.subs.map((s,i)=>`<button class="${(S.day.subs[q.id]||[]).includes(i)?'on':''}" onclick="event.stopPropagation();subTick('${q.id}',${i})">${(S.day.subs[q.id]||[]).includes(i)?'✓':'○'} ${s}<span class="sp">+1</span></button>`).join('')+'</div>':''}
+      ${done?'':`<div class="qact"><button onclick="event.stopPropagation();pushTask('${q.id}')">→ schieben</button><button onclick="event.stopPropagation();editTask('${q.id}')">✎ Bearbeiten</button></div>`}
       </div><span class="pts">+${calcPts(q)}</span><button class="chk" onclick="event.stopPropagation();check('${q.id}')">${done?'✓':''}</button></div>`;
   });
-  h+=`<button class="addbtn" onclick="show('neu')">＋ Neu · Aufgabe / Routine / Counter</button>`;
+  h+=`<button class="addbtn" onclick="startNew()">＋ Neu · Aufgabe / Routine / Counter</button>`;
   return h;
 }
 function qMove(i,d){const j=i+d;if(j<0||j>=S.queue.length)return;[S.queue[i],S.queue[j]]=[S.queue[j],S.queue[i]];save();renderGroups()}
@@ -759,7 +785,7 @@ function addTemplate(q){
 }
 
 /* ---------- Neu-Formular ---------- */
-const F={typ:'aufgabe',min:30,k:'leicht',e:'neutral',w:'soll'};
+const F={typ:'aufgabe',min:30,k:'leicht',e:'neutral',w:'soll',freq:'daily',editId:null};
 function chipRow(host,opts,cur,fn){
   $(host).innerHTML=opts.map(o=>`<button class="${o.v===cur?'sel':''}" onclick="${fn}('${o.v}')">${o.l}</button>`).join('');
 }
@@ -769,30 +795,50 @@ function renderNeu(){
   chipRow('#fK',['leicht','mittel','schwer'].map(v=>({v,l:v})),F.k,'fSet_k');
   chipRow('#fE',[{v:'gibt',l:'gibt'},{v:'neutral',l:'neutral'},{v:'zieht',l:'zieht'}],F.e,'fSet_e');
   chipRow('#fWicht',[{v:'muss',l:'Muss −20 %/T'},{v:'soll',l:'Soll −10 %/T'},{v:'idee',l:'Idee −0 %'}],F.w,'fSet_w');
+  chipRow('#fFreq',[{v:'daily',l:'täglich'},{v:'2',l:'alle 2 Tage'},{v:'3',l:'alle 3 Tage'},{v:'7',l:'1×/Woche'}],F.freq,'fSet_freq');
   $('#fWichtWrap').style.display=F.typ==='aufgabe'?'block':'none';
+  $('#fFreqWrap').style.display=F.typ==='routine'?'block':'none';
   $('#fPts').textContent='≈ '+Math.max(1,Math.round((F.min/5)*KV[F.k]*EV[F.e]))+' P';
   const tl=$('#tplList');
   if(S.templates.length){tl.innerHTML=S.templates.slice().reverse().slice(0,5).map((t,i)=>
     `<div class="tpl"><span>📋</span><span class="n">${t.name}${t.subs?' · '+t.subs.length+' Unteraufgaben':''}<br><span class="small">zuletzt ${t.last}${t.ist?' · Ø '+t.ist+' Min':''} · ${t.used}× genutzt</span></span><button class="use" onclick="useTpl(${S.templates.length-1-i})">übernehmen</button></div>`).join('')}
 }
 function fSet_typ(v){F.typ=v;renderNeu()}function fSet_min(v){F.min=+v;renderNeu()}
-function fSet_k(v){F.k=v;renderNeu()}function fSet_e(v){F.e=v;renderNeu()}function fSet_w(v){F.w=v;renderNeu()}
+function fSet_k(v){F.k=v;renderNeu()}function fSet_e(v){F.e=v;renderNeu()}function fSet_w(v){F.w=v;renderNeu()}function fSet_freq(v){F.freq=v;renderNeu()}
 function useTpl(i){const t=S.templates[i];F.min=t.min;F.k=t.k;F.e=t.e;F.w=t.w||'soll';
-  $('#fName').value=t.name;$('#fSubs').value=(t.subs||[]).join(' · ');F._tpl=true;renderNeu();toast('Vorlage übernommen')}
+  $('#fName').value=t.name;$('#fSubs').value=(t.subs||[]).join('\n');F._tpl=true;renderNeu();toast('Vorlage übernommen')}
 function saveNew(){
   const name=$('#fName').value.trim();
   if(!name){toast('Name fehlt',1);return}
-  const subs=$('#fSubs').value.trim()?$('#fSubs').value.split('·').map(s=>s.trim()).filter(Boolean):null;
+  const subs=$('#fSubs').value.trim()?$('#fSubs').value.split(/\n|·/).map(s=>s.trim()).filter(Boolean):null;
+  if(F.editId){
+    const q=S.queue.find(x=>x.id===F.editId);
+    if(q){q.name=name;q.min=F.min;q.k=F.k;q.e=F.e;q.w=F.w;q.subs=subs;addTemplate(q)}
+    F.editId=null;F._tpl=false;$('#fName').value='';$('#fSubs').value='';
+    save();toast('✏️ aktualisiert');show('home',document.querySelector('[data-v=home]'));renderGroups();return;
+  }
   const id='u'+now();
   if(F.typ==='aufgabe'){
-    S.queue.push({id,typ:'aufgabe',name,min:F.min,k:F.k,e:F.e,w:F.w,subs,fromTpl:!!F._tpl});
+    const q={id,typ:'aufgabe',name,min:F.min,k:F.k,e:F.e,w:F.w,subs,fromTpl:!!F._tpl};
+    S.queue.push(q);addTemplate(q);
   }else if(F.typ==='routine'){
-    S.items.push({id,typ:'routine',gr:'flex',name:'🔁 '+name,min:F.min,k:F.k,e:F.e,subs});
+    if(F.freq==='daily')S.items.push({id,typ:'routine',gr:'flex',name:'🔁 '+name,min:F.min,k:F.k,e:F.e,subs});
+    else S.items.push({id,typ:'routine',gr:'zwei',name:'🔁 '+name,min:F.min,k:F.k,e:F.e,subs,every:+F.freq});
   }else{
     S.items.push({id,typ:'counter',ctype:'build',name:'🔢 '+name,per:1});
   }
   F._tpl=false;$('#fName').value='';$('#fSubs').value='';
   save();toast('✅ aufgenommen');show('home',document.querySelector('[data-v=home]'));renderGroups();
+}
+function startNew(btn){
+  F.editId=null;F._tpl=false;$('#fName').value='';$('#fSubs').value='';
+  show('neu',btn||document.querySelector('[data-v=neu]'));
+}
+function editTask(id){
+  const q=S.queue.find(x=>x.id===id);if(!q)return;
+  F.editId=id;F.typ='aufgabe';F.min=q.min;F.k=q.k;F.e=q.e;F.w=q.w;
+  $('#fName').value=q.name;$('#fSubs').value=(q.subs||[]).join('\n');
+  show('neu',document.querySelector('[data-v=neu]'));toast('✏️ Bearbeiten: '+q.name);
 }
 
 /* ---------- Session ---------- */
