@@ -194,12 +194,53 @@ input[type=text],input[type=number],textarea{width:100%;background:#0b111c;borde
 .fbtns .fdone{flex:1.4;border:none;color:#0d1420;background:linear-gradient(115deg,#3ecf8e,#6dd3e0)}
 .fbtns .fpause{color:var(--cyan);border-color:rgba(109,211,224,.5)}
 .fsub{font-size:.74rem;color:var(--mut);margin-top:4px}
+
+/* ---------- v1.3 ---------- */
+.hchips{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
+.chip2{display:inline-flex;align-items:center;gap:4px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:2px 8px;font-size:.62rem;white-space:nowrap}
+.spark{margin-top:6px;display:block}
+.reopen{background:linear-gradient(115deg,rgba(242,184,75,.18),rgba(246,109,109,.14));border:1px solid rgba(242,184,75,.5);border-radius:16px;padding:11px 14px;margin-bottom:12px;display:flex;flex-direction:column;gap:2px;cursor:pointer}
+.ql{margin-top:12px;border-top:1px solid var(--line);padding-top:11px}
+.ql-head{display:flex;flex-direction:column;gap:1px;margin-bottom:6px}
+.ql-row{display:flex;gap:8px;margin-top:6px;align-items:center}
+.ql-sign{width:44px;height:44px;flex:none;border-radius:12px;border:1px solid var(--line);background:var(--card2);font-size:1.15rem;font-weight:800;color:var(--ok)}
+.ql-sign.neg{color:var(--bad);border-color:rgba(246,109,109,.5)}
+.ql-row input[type=text],.ql-row input[type=number]{margin-top:0}
+.ql-book{width:100%;margin-top:9px;border:none;border-radius:13px;padding:12px;font-weight:800;color:#0d1420;background:linear-gradient(115deg,#3ecf8e,#6dd3e0);font-size:.85rem;min-height:46px}
+.ql-book.neg{background:linear-gradient(115deg,#d84f4f,#f66d6d);color:#fff}
+.ql-avg{margin-top:9px;font-size:.68rem;color:var(--mut);text-align:center;padding:7px;border:1px dashed var(--line);border-radius:10px}
+.ql-goal{align-items:center;justify-content:center;gap:14px;margin-top:7px}
+.ql-goal button{width:38px;height:38px;border-radius:11px;border:1px solid var(--line);background:var(--card2);font-size:1rem}
+.playbtn{width:44px;height:44px;border-radius:14px;border:1px solid rgba(109,211,224,.5);background:rgba(109,211,224,.1);color:var(--cyan);font-size:.95rem;flex:none}
+.expbtn{width:30px;height:44px;border:none;background:none;color:var(--mut);flex:none;font-size:.85rem;transition:transform .25s}
+.expbtn.open{transform:rotate(180deg)}
+.qdetail{display:none;margin-top:4px}
+.qdetail.show{display:block}
+.donehead{display:flex;align-items:center;gap:9px;background:var(--card2);border:1px dashed var(--line);border-radius:14px;padding:12px 14px;margin:4px 0 8px;font-size:.8rem;color:var(--mut);cursor:pointer}
+.seg{display:flex;gap:6px;margin-bottom:12px}
+.seg button{flex:1;border:1px solid var(--line);background:var(--card2);color:var(--mut);border-radius:999px;padding:9px 0;font-size:.7rem;font-weight:600;min-height:38px}
+.seg button.on{background:linear-gradient(115deg,var(--blue),var(--purple));color:#0d1420;border-color:transparent}
+.curvebox{background:#0b111c;border:1px solid var(--line);border-radius:14px;padding:8px 4px 2px}
+.dayrow{display:flex;align-items:center;gap:10px;background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:7px;font-size:.78rem}
+.dayrow .dl{width:58px;flex:none}.dayrow .dl b{display:block;font-size:.76rem}.dayrow .dl span{font-size:.56rem;color:var(--mut)}
+.dayrow .dbar{flex:1;height:7px;border-radius:4px;background:#0b111c;overflow:hidden;position:relative}
+.dayrow .dbar i{position:absolute;top:0;bottom:0;left:0;border-radius:4px}
+.dayrow .dv{width:96px;text-align:right;font-size:.66rem;font-variant-numeric:tabular-nums}
+.ddet{display:none;grid-template-columns:1fr 1fr;gap:6px;margin:-2px 0 8px}
+.ddet.show{display:grid}
+.ddet>div{background:var(--card2);border:1px solid var(--line);border-radius:11px;padding:8px 10px;font-size:.7rem}
+.ddet span{display:block;color:var(--mut);font-size:.56rem}
+.ftile{border-color:rgba(109,211,224,.55)!important}
 </style>
 </head>
 <body>
 
 <!-- ============ VIEW: HEUTE ============ -->
 <div class="view on" id="v-home">
+  <div class="reopen" id="openBanner" style="display:none" onclick="openFinish()">
+    <b>🌇 Tag vom <span id="openBannerDate"></span> noch offen</b>
+    <span class="small">Antippen → abschließen &amp; exportieren — erst danach startet der neue Tag</span>
+  </div>
   <header>
     <div class="ring">
       <svg width="74" height="74" viewBox="0 0 74 74">
@@ -209,14 +250,19 @@ input[type=text],input[type=number],textarea{width:100%;background:#0b111c;borde
         <circle id="ringArc" cx="37" cy="37" r="31" fill="none" stroke="url(#rg)" stroke-width="7"
           stroke-linecap="round" stroke-dasharray="194.8" stroke-dashoffset="194.8"/>
       </svg>
-      <div class="val"><b id="scoreNow" class="mono">0</b><span class="small" id="goalLbl">/ 58 P</span></div>
+      <div class="val"><b id="scoreNow" class="mono" style="font-size:.85rem">0</b><span class="small" id="goalLbl" style="font-size:.58rem">/ –</span></div>
     </div>
     <div class="htxt">
       <h1 id="dateLbl">—</h1>
-      <div class="trend" id="trendBox">Ø 7 T: <b class="mono" id="avg7">–</b>&nbsp;<span id="trendArrow"></span>&nbsp;<span class="small" id="avg30l">Ø 30 T: –</span></div>
-      <div class="streak" id="streakLbl"></div>
+      <div class="hchips">
+        <span class="chip2">Ø7 <b class="mono" id="avg7">–</b><span id="trendArrow"></span></span>
+        <span class="chip2" id="streakChip">🔥 –</span>
+        <span class="chip2" id="battChip">🔋 –</span>
+        <span class="chip2" id="doneChip">✓ –</span>
+      </div>
+      <svg class="spark" id="spark" width="160" height="26" viewBox="0 0 160 26" onclick="show('stats',document.querySelector('[data-v=stats]'))"></svg>
     </div>
-  </header>
+  </header>  </header>
 
   <div class="battery-card">
     <div class="batt-top"><b>🔋 Energie</b><span class="batt-num mono" id="battNum"></span></div>
@@ -230,6 +276,21 @@ input[type=text],input[type=number],textarea{width:100%;background:#0b111c;borde
       <button onclick="battAdj(-5)">− 5</button>
       <button onclick="battAdj(5)">+ 5</button>
       <button class="work" onclick="show('session')">💼 Session bewerten</button>
+    </div>
+    <div class="ql">
+      <div class="ql-head"><b>⚡ Quick-Log</b><span class="small">ohne App-Aufgabe tracken — zählt voll in Punkte, Ø &amp; Trends</span></div>
+      <div class="ql-row">
+        <button class="ql-sign" id="qlSign" onclick="qlToggleSign()">＋</button>
+        <input type="text" id="qlName" placeholder="Titel (optional)">
+      </div>
+      <div class="chips" id="qlMin"></div>
+      <div class="ql-row"><input type="number" id="qlMinFree" inputmode="numeric" min="1" max="960" placeholder="frei: 1 – 960 Min (bis 16 h)" oninput="qlFree(this.value)"></div>
+      <div class="chips" id="qlK"></div>
+      <button class="ql-book" id="qlBook" onclick="qlBook()">＋ buchen</button>
+      <div class="ql-avg" id="qlAvg" onclick="qlGoalTgl()"></div>
+      <div class="ql-goal" id="qlGoal" style="display:none">
+        <button onclick="setAdj('goal',-100)">−</button><b class="mono" id="qlGoalVal"></b><button onclick="setAdj('goal',100)">＋</button>
+      </div>
     </div>
   </div>
 
@@ -245,6 +306,7 @@ input[type=text],input[type=number],textarea{width:100%;background:#0b111c;borde
     <input type="text" id="fName" placeholder="Was ist zu tun?">
     <h2>⏱ Dauer</h2>
     <div class="chips" id="fMin"></div>
+    <input type="number" id="fMinFree" inputmode="numeric" min="1" max="960" placeholder="frei: 1 – 960 Min (bis 16 h)" oninput="fMinFreeIn(this)">
     <h2>🧩 Komplexität</h2>
     <div class="chips" id="fK"></div>
     <h2>⚡ Energie</h2>
@@ -257,9 +319,9 @@ input[type=text],input[type=number],textarea{width:100%;background:#0b111c;borde
       <h2>🎯 Wichtigkeit <span class="small">(steuert den Schiebe-Malus)</span></h2>
       <div class="chips" id="fWicht"></div>
     </div>
-    <h2>Unteraufgaben <span class="small">(eine pro Zeile — je Schritt +1 P Belohnung)</span></h2>
+    <h2>Unteraufgaben <span class="small">(eine pro Zeile — je Schritt +100 P Belohnung)</span></h2>
     <textarea id="fSubs" rows="3" placeholder="Ein Schritt pro Zeile"></textarea>
-    <div class="preview"><span>Punkte nach Formel<br><span class="small">Min ÷ 5 × K × E — nicht frei wählbar</span></span><b id="fPts">0 P</b></div>
+    <div class="preview"><span>Punkte nach Formel<br><span class="small">Min ÷ 5 × K × E × 100 — nicht frei wählbar</span></span><b id="fPts">0 P</b></div>
   </div>
   <div class="card" id="tplCard">
     <h2 style="margin-top:0">📋 Vorlagen-Archiv schlägt vor</h2>
@@ -275,12 +337,13 @@ input[type=text],input[type=number],textarea{width:100%;background:#0b111c;borde
     <span class="small">Bepunktet deinen geschäftlichen Fleiß und zieht live Akku. Das Zeittracking selbst bleibt im DFM OS.</span>
     <h2>Dauer</h2>
     <div class="chips" id="sMin"></div>
+    <input type="number" id="sMinFree" inputmode="numeric" min="1" max="960" placeholder="frei: 1 – 960 Min (bis 16 h)" oninput="sMinFreeIn(this)">
     <h2>Fleiß / Fokus</h2>
     <div class="chips" id="sFocus"></div>
     <h2>Akku-Verbrauch</h2>
     <input type="range" class="slider" id="sBatt" min="0" max="40" value="15" oninput="renderSession()">
     <div style="display:flex;justify-content:space-between" class="small"><span>0 %</span><b class="mono" style="color:var(--cyan)" id="sBattLbl">−15 % Akku</b><span>40 %</span></div>
-    <div class="preview"><span>Session-Punkte<br><span class="small">Min ÷ 5 × Fleiß</span></span><b id="sPts">+12 P</b></div>
+    <div class="preview"><span>Session-Punkte<br><span class="small">Min ÷ 5 × Fleiß × 100</span></span><b id="sPts">+12 P</b></div>
   </div>
   <button class="save" onclick="bookSession()">✅ Session buchen · Akku anpassen</button>
 </div>
@@ -288,14 +351,16 @@ input[type=text],input[type=number],textarea{width:100%;background:#0b111c;borde
 <!-- ============ VIEW: STATS ============ -->
 <div class="view" id="v-stats">
   <div class="card">
-    <h2 style="margin-top:0">📈 Tages-Score · letzte 14 Tage</h2>
-    <div class="chart"><div class="goalline" id="goalline"></div><div class="bars" id="bars"></div></div>
-    <div class="statgrid" style="margin-top:20px">
-      <div class="card"><span class="small">Ø 7 Tage</span><br><b class="mono" id="s7">–</b></div>
-      <div class="card"><span class="small">Ø 30 Tage</span><br><b class="mono" id="s30">–</b></div>
-      <div class="card"><span class="small">Beste</span><br><b class="mono" id="sBest">–</b></div>
+    <div class="seg" id="statSeg">
+      <button class="on" onclick="statTab('tage',this)">Tage</button>
+      <button onclick="statTab('wochen',this)">Wochen</button>
+      <button onclick="statTab('monate',this)">Monate</button>
+      <button onclick="statTab('gesamt',this)">Gesamt</button>
     </div>
+    <div class="curvebox"><svg id="curve" width="100%" height="130" viewBox="0 0 360 130" preserveAspectRatio="none"></svg></div>
+    <div class="statgrid" style="margin-top:12px" id="statKpi"></div>
   </div>
+  <div class="card"><h2 style="margin-top:0" id="listTitle">Tage</h2><div id="statList"><span class="small">Noch keine Daten.</span></div></div>
   <div class="card"><h2 style="margin-top:0">⚠️ Größte Minus-Quellen (30 T)</h2><div id="minusList"><span class="small">Noch keine Daten.</span></div></div>
   <div class="card"><h2 style="margin-top:0">⏱ Zeitabweichung Soll / Ist</h2><div id="devList"><span class="small">Fokus-Timer nutzen, dann erscheinen hier Soll/Ist-Vergleiche.</span></div></div>
 </div>
@@ -304,12 +369,12 @@ input[type=text],input[type=number],textarea{width:100%;background:#0b111c;borde
 <div class="view" id="v-set">
   <div class="card">
     <div class="row"><span class="lbl">🎯 Tagesziel-Punkte<br><span class="small">Anker für Ring, Trend &amp; Statistik</span></span>
-      <div class="stp"><button onclick="setAdj('goal',-2)">−</button><b class="mono" id="setGoal"></b><button onclick="setAdj('goal',2)">＋</button></div></div>
+      <div class="stp"><button onclick="setAdj('goal',-100)">−</button><b class="mono" id="setGoal"></b><button onclick="setAdj('goal',100)">＋</button></div></div>
     <div class="row"><span class="lbl">⚖️ Malus-Faktor<br><span class="small">skaliert alle Minuspunkte</span></span>
       <div class="stp"><button onclick="setAdj('malus',-0.1)">−</button><b class="mono" id="setMalus"></b><button onclick="setAdj('malus',0.1)">＋</button></div></div>
     <div class="row"><span class="lbl">🔋 Akku-Block je Muss-Aufgabe<br><span class="small">% die eine offene Muss-Aufgabe blockiert</span></span>
       <div class="stp"><button onclick="setAdj('block',-1)">−</button><b class="mono" id="setBlock"></b><button onclick="setAdj('block',1)">＋</button></div></div>
-    <div class="row"><span class="lbl">✨ Streak-Bonus (+3 P)</span><button class="sw" id="swStreak" onclick="setTgl('streak',this)"></button></div>
+    <div class="row"><span class="lbl">✨ Streak-Bonus (+300 P)</span><button class="sw" id="swStreak" onclick="setTgl('streak',this)"></button></div>
     <div class="row"><span class="lbl">🔋 Akku-Start aus Abendreflexion</span><button class="sw" id="swBatt" onclick="setTgl('battFromRef',this)"></button></div>
   </div>
   <div class="card">
@@ -388,7 +453,7 @@ input[type=text],input[type=number],textarea{width:100%;background:#0b111c;borde
 'use strict';
 /* =====================================================================
    ===DATA=== SEED · Datenbasis "Perfekter Tag" (18.07.2026, freigegeben)
-   Punkte-Formel: P = (min/5) * K * E  (min. 1) — Counter: Sockel 3 * K * E
+   Punkte-Formel: P = (min/5) * K * E * 100  (min. 100) — Counter: Sockel 3 * K * E * 100  [v1.3]
    ===================================================================== */
 const KV={leicht:1.0,mittel:1.5,schwer:2.0}, EV={gibt:0.8,neutral:1.0,zieht:1.3};
 const SEED_ITEMS=[
@@ -434,37 +499,59 @@ const GROUPS=[
 ];
 /* ===ENDE DATA=== */
 
+const SCALE=100;
+const fmt=n=>(n??0).toLocaleString('de-DE');
+const fmt0=v=>v==null?'–':fmt(v);
 const $=q=>document.querySelector(q);
 const todayStr=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
-const fmtDate=()=>new Date().toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long'});
+const fmtDate=()=>new Date(((typeof S!=='undefined'&&S&&S.day)?S.day.date:todayStr())+'T12:00').toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long'});
 const now=()=>Date.now();
 const fmtMS=s=>String(Math.floor(s/60)).padStart(2,'0')+':'+String(Math.floor(s%60)).padStart(2,'0');
 
 function calcPts(it){
-  if(it.fix)return it.fix;
-  return Math.max(1,Math.round((it.min/5)*KV[it.k]*EV[it.e]));
+  if(it.fix)return it.fix*SCALE;
+  return Math.max(1,Math.round((it.min/5)*KV[it.k]*EV[it.e]))*SCALE;
 }
-function ctrHoldPts(it){return it.hold||Math.max(1,Math.round(3*KV[it.k||'leicht']*EV[it.e||'neutral']))}
+function ctrHoldPts(it){return (it.hold||Math.max(1,Math.round(3*KV[it.k||'leicht']*EV[it.e||'neutral'])))*SCALE}
 
 /* ---------- State ---------- */
-const DEFAULTS={goal:58,malus:1.0,block:6,streak:true,battFromRef:true};
+const DEFAULTS={goal:5800,malus:1.0,block:6,streak:true,battFromRef:true};
 let S=null;
 function freshDay(batt){return{date:todayStr(),checks:{},half:{},subs:{},mg:{},ticks:{},ledger:[],battery:batt??70,timers:{},focus:{},ist:{},pushed:{},sessions:0}}
 function load(){
   let raw=null;
   try{raw=localStorage.getItem('routinen_v1')}catch(e){}
   if(raw){try{S=JSON.parse(raw)}catch(e){S=null}}
-  if(!S)S={v:1,set:{...DEFAULTS},items:SEED_ITEMS.map(x=>({...x})),queue:[],templates:[],history:[],lastDone:{},day:freshDay(70)};
+  if(!S)S={v:3,scale:SCALE,set:{...DEFAULTS},items:SEED_ITEMS.map(x=>({...x})),queue:[],templates:[],history:[],lastDone:{},day:freshDay(70)};
   if(!S.day.focus)S.day.focus={};
-  if(S.day.date!==todayStr())rollover();
+  migrate();
+  /* v1.3: KEIN Auto-Reset mehr — der Tag bleibt offen, bis er aktiv abgeschlossen wird.
+     Sicherheitsnetz: nach ≥ 2 Tagen ohne Abschluss wird automatisch geschlossen. */
+  const diff=Math.floor((new Date(todayStr())-new Date(S.day.date))/864e5);
+  if(diff>=2)autoClose();
+}
+function migrate(){
+  const cur=S.scale||1;
+  if(cur>=SCALE){S.scale=SCALE;return}
+  try{localStorage.setItem('routinen_v1_backup_pre13',JSON.stringify(S))}catch(e){}
+  const f=SCALE/cur, mul=e=>{if(typeof e.p==='number')e.p=Math.round(e.p*f)};
+  (S.day.ledger||[]).forEach(mul);
+  (S.history||[]).forEach(h=>{h.score=Math.round((h.score||0)*f);h.plus=Math.round((h.plus||0)*f);h.minus=Math.round((h.minus||0)*f);(h.ledger||[]).forEach(mul)});
+  S.set.goal=Math.round((S.set.goal||58)*f);
+  S.scale=SCALE;S.v=3;save();
 }
 function save(){try{localStorage.setItem('routinen_v1',JSON.stringify(S))}catch(e){}}
-function rollover(){
+function capHistory(){
+  if(S.history.length>730)S.history=S.history.slice(-730);
+  for(let i=0;i<S.history.length-120;i++){delete S.history[i].ledger;delete S.history[i].ist;delete S.history[i].pushed}
+}
+function autoClose(){
+  settleCounters();
   const sum=daySummary();
   S.history.push({date:S.day.date,score:sum.score,plus:sum.plus,minus:sum.minus,auto:true,ledger:S.day.ledger,ist:S.day.ist,pushed:S.day.pushed});
-  if(S.history.length>120)S.history=S.history.slice(-120);
-  const batt=S.set.battFromRef&&S.day.refE!=null?S.day.refE:70;
-  S.day=freshDay(batt);save();
+  capHistory();
+  S.queue=S.queue.filter(q=>!S.day.checks[q.id]);
+  S.day=freshDay(70);save();
 }
 
 function log(itemId,pts,kind,extra){S.day.ledger.push({t:now(),id:itemId,p:pts,kind,...(extra||{})});save()}
@@ -487,18 +574,42 @@ function show(v,btn){
 
 function renderHeader(){
   const sum=daySummary(),goal=S.set.goal;
-  $('#scoreNow').textContent=sum.score;
-  $('#goalLbl').textContent='/ '+goal+' P';
-  $('#dateLbl').textContent=fmtDate();
+  $('#scoreNow').textContent=fmt(sum.score);
+  $('#goalLbl').textContent='/ '+fmt(goal);
+  const dd=new Date(S.day.date+'T12:00');
+  $('#dateLbl').textContent=dd.toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long'});
+  const stale=S.day.date!==todayStr();
+  $('#openBanner').style.display=stale?'flex':'none';
+  if(stale)$('#openBannerDate').textContent=dd.toLocaleDateString('de-DE',{weekday:'short',day:'numeric',month:'short'});
+  $('#finishBtn').textContent=stale?('🌇 Tag vom '+dd.toLocaleDateString('de-DE',{day:'numeric',month:'numeric'})+' abschließen'):'🌇 Tag abschließen';
   $('#ringArc').setAttribute('stroke-dashoffset',194.8*(1-Math.min(Math.max(sum.score,0)/goal,1)));
   const h=S.history;
   const avg=n=>{const s=h.slice(-n);return s.length?Math.round(s.reduce((a,b)=>a+b.score,0)/s.length):null};
   const a7=avg(7),a30=avg(30);
-  $('#avg7').textContent=a7==null?'–':a7+' P';
-  $('#avg30l').textContent='Ø 30 T: '+(a30==null?'–':a30);
+  $('#avg7').textContent=a7==null?'–':fmt(a7);
   $('#trendArrow').innerHTML=a7!=null&&a30!=null?(a7>=a30?'<span style="color:var(--ok)">▲</span>':'<span style="color:var(--bad)">▼</span>'):'';
   let st=0;for(let i=h.length-1;i>=0;i--){if(h[i].score>=goal)st++;else break}
-  $('#streakLbl').textContent=st>0?('🔥 Streak: '+st+(st===1?' Tag':' Tage')+' über Ziel'):'';
+  $('#streakChip').textContent='🔥 '+st+' T';
+  $('#battChip').textContent='🔋 '+S.day.battery+' %';
+  let all=0,dn=0;
+  for(const it of S.items){if(it.typ!=='routine'||!isToday(it)||it.viaFinish)continue;all++;if(S.day.checks[it.id])dn++}
+  for(const q of S.queue){all++;if(S.day.checks[q.id])dn++}
+  $('#doneChip').textContent='✓ '+dn+'/'+all;
+  const vals=[...h.slice(-6).map(x=>x.score),sum.score];
+  const sp=$('#spark');
+  if(vals.length>=2){
+    const mx=Math.max(goal,...vals,1),mn=Math.min(0,...vals);
+    const gy=(26-((goal-mn)/(mx-mn||1))*20-3).toFixed(1);
+    sp.innerHTML='<line x1="0" y1="'+gy+'" x2="160" y2="'+gy+'" stroke="#243349" stroke-dasharray="3 4"/>'+
+      '<path d="'+smoothPath(vals,160,26,mx,mn)+'" fill="none" stroke="#6dd3e0" stroke-width="2" stroke-linecap="round" opacity=".85"/>';
+  }else sp.innerHTML='';
+}
+function smoothPath(vals,w,h,max,min){
+  const n=vals.length,X=i=>n===1?w/2:i*(w/(n-1)),Y=v=>h-((v-min)/(max-min||1))*(h-6)-3;
+  let d='M'+X(0).toFixed(1)+' '+Y(vals[0]).toFixed(1);
+  for(let i=1;i<n;i++){const x0=X(i-1),x1=X(i),y0=Y(vals[i-1]),y1=Y(vals[i]),mx=((x0+x1)/2).toFixed(1);
+    d+=' C '+mx+' '+y0.toFixed(1)+', '+mx+' '+y1.toFixed(1)+', '+x1.toFixed(1)+' '+y1.toFixed(1)}
+  return d;
 }
 
 function blockedPct(){
@@ -528,7 +639,7 @@ function dueInfo(it){
   if(diff===0)return{cls:'b-ok',txt:'heute schon erledigt',malus:0,bonus:false};
   if(diff<ev)return{cls:'b-ok',txt:'zuletzt vor '+diff+' T · fällig in '+(ev-diff)+' T',malus:0,bonus:true};
   if(diff===ev)return{cls:'b-warn',txt:'heute fällig',malus:0,bonus:false};
-  const over=diff-ev,m=Math.round(over*2*S.set.malus);
+  const over=diff-ev,m=Math.round(over*2*S.set.malus)*SCALE;
   return{cls:'b-bad',txt:'⚠️ überfällig seit '+over+' Tag'+(over>1?'en':'')+' → Malus läuft',malus:m,bonus:false};
 }
 function chainLocked(it){return it.gr==='morgen'&&it.locked&&!S.day.checks['prep']}
@@ -549,11 +660,14 @@ function renderGroups(){
         const v=S.day.ticks[c.id]||0;
         if(c.ctype==='limit'){
           const cls=v>c.limit?'limit-bad':v===c.limit?'limit-warn':'limit-ok';
-          bodyHtml+=`<button class="ctr ${cls}" onclick="tick('${c.id}')"><span class="plus">+</span><span class="minus" onclick="event.stopPropagation();untick('${c.id}')">−</span><span class="cnum mono">${v}<em> / ≤ ${c.limit}</em></span><span class="ctitle">${c.name}</span><span class="cmeta">gehalten +${ctrHoldPts(c)} · drüber −${c.malusTick}/Tick</span></button>`;
+          bodyHtml+=`<button class="ctr ${cls}" onclick="tick('${c.id}')"><span class="plus">+</span><span class="minus" onclick="event.stopPropagation();untick('${c.id}')">−</span><span class="cnum mono">${v}<em> / ≤ ${c.limit}</em></span><span class="ctitle">${c.name}</span><span class="cmeta">gehalten +${fmt(ctrHoldPts(c))} · drüber −${fmt(c.malusTick*SCALE)}/Tick</span></button>`;
         }else{
-          bodyHtml+=`<button class="ctr" style="grid-column:1/-1" onclick="tick('${c.id}')"><span class="plus">+</span><span class="minus" onclick="event.stopPropagation();untick('${c.id}')">−</span><span class="cnum mono">${v}<em> Ticks</em></span><span class="ctitle">${c.name}</span><span class="cmeta">+${c.per} P je Tick · Morgen-Kaffee = Tick 1</span></button>`;
+          bodyHtml+=`<button class="ctr" style="grid-column:1/-1" onclick="tick('${c.id}')"><span class="plus">+</span><span class="minus" onclick="event.stopPropagation();untick('${c.id}')">−</span><span class="cnum mono">${v}<em> Ticks</em></span><span class="ctitle">${c.name}</span><span class="cmeta">+${fmt(c.per*SCALE)} P je Tick · Morgen-Kaffee = Tick 1</span></button>`;
         }
       }
+      const fEnt=Object.entries(S.day.focus)[0];
+      if(fEnt){const fid=fEnt[0],f=fEnt[1];const fit=S.items.find(i=>i.id===fid)||S.queue.find(q=>q.id===fid);
+        bodyHtml+=`<button class="ctr ftile" onclick="openFocus('${fid}')"><span class="cnum mono" style="color:var(--cyan)"><span id="runt-${fid}">${fmtMS(focElapsed(f))}</span></span><span class="ctitle">${f.running?'▶':'⏸'} ${fit?fit.name:'Fokus'}</span><span class="cmeta">Fokus-Session — antippen für Tacho</span></button>`;}
       bodyHtml+='</div>';
     }
     else if(g.id==='queue'){
@@ -577,14 +691,14 @@ function renderGroups(){
     sec.innerHTML=`<div class="ghead" onclick="tgGroup('${g.id}',this)"><span class="ico">${g.ico}</span><span class="gname">${g.name}</span><span class="gpts mono">${ptsLbl}</span><span class="chev">▾</span></div><div class="gbody">${bodyHtml}</div>`;
     host.appendChild(sec);
   }
-  renderBatt();renderHeader();
+  renderBatt();renderHeader();renderQL();
 }
 function tgGroup(id,h){openState[id]=!openState[id];h.parentElement.classList.toggle('open')}
 
 function renderFlex(){
   return itemsOf('flex').map(it=>{
     const done=!!S.day.checks[it.id];
-    return `<button class="pill ${done?'done':''}" onclick="check('${it.id}')">${it.name} +${calcPts(it)}</button>`;
+    return `<button class="pill ${done?'done':''}" onclick="check('${it.id}')">${it.name} +${fmt(calcPts(it))}</button>`;
   }).join('');
 }
 
@@ -600,8 +714,8 @@ function renderItem(it,done){
   let right='';
   const due=dueInfo(it);
   if(due){cls+=' '+due.cls;sub=`<span class="isub">${due.txt}</span>`;
-    if(due.bonus&&!done)sub+=`<span class="bonus">heute trotzdem = +1 Bonus</span>`;
-    if(due.malus)right=`<span class="malus">−${due.malus}</span> `;}
+    if(due.bonus&&!done)sub+=`<span class="bonus">heute trotzdem = +${SCALE} Bonus</span>`;
+    if(due.malus)right=`<span class="malus">−${fmt(due.malus)}</span> `;}
   if(done)cls+=' done';
   if(chainLocked(it))cls+=' locked';
   if(it.gr==='tag'&&!done)cls+=' b-warn';
@@ -609,7 +723,7 @@ function renderItem(it,done){
   if(it.mg){const cur=S.day.mg[it.id];
     extra+='<div class="mg">'+it.mg.map(m=>`<button class="${cur===m?'sel':''}" onclick="event.stopPropagation();setMg('${it.id}',${m})">${m} mg</button>`).join('')+'</div>';}
   if(it.subs){const st=S.day.subs[it.id]||[];
-    extra+='<div class="subrow">'+it.subs.map((s,i)=>`<button class="${st.includes(i)?'on':''}" onclick="event.stopPropagation();subTick('${it.id}',${i})">${st.includes(i)?'✓':'○'} ${s}<span class="sp">+1</span></button>`).join('')+'</div>';}
+    extra+='<div class="subrow">'+it.subs.map((s,i)=>`<button class="${st.includes(i)?'on':''}" onclick="event.stopPropagation();subTick('${it.id}',${i})">${st.includes(i)?'✓':'○'} ${s}<span class="sp">+${SCALE}</span></button>`).join('')+'</div>';}
   if(it.id==='fruehstueck'&&S.day.timers.elvanse&&!done)
     sub+=` <span class="timer"><span class="tdot"></span><span class="mono" id="t-elvanse">--:--</span> Elvanse-Fenster</span>`;
   if(it.deadline&&!done)sub+=` <span class="timer"><span class="tdot"></span>bis ${it.deadline}</span>`;
@@ -618,7 +732,7 @@ function renderItem(it,done){
   sub+=runChip(it.id);
   const halfBtn=it.half&&!done?`<button class="half" onclick="event.stopPropagation();check('${it.id}',true)">½</button>`:'';
   const tap=focusable(it)?`onclick="openFocus('${it.id}')"`:'';
-  return `<div class="${cls}" ${tap}><div class="iname">${it.name}${sub}${extra}</div><span class="pts">${right}+${pts}</span>${halfBtn}<button class="chk" onclick="event.stopPropagation();check('${it.id}')">${done?'✓':''}</button></div>`;
+  return `<div class="${cls}" ${tap}><div class="iname">${it.name}${sub}${extra}</div><span class="pts">${right}+${fmt(pts)}</span>${halfBtn}<button class="chk" onclick="event.stopPropagation();check('${it.id}')">${done?'✓':''}</button></div>`;
 }
 
 /* ---------- Aktionen ---------- */
@@ -626,9 +740,9 @@ function setMg(id,m){S.day.mg[id]=m;save();renderGroups()}
 function subTick(id,i){
   const st=S.day.subs[id]||(S.day.subs[id]=[]);
   if(st.includes(i))return;
-  st.push(i);log(id,1,'substep',{step:i});toast('+1 P 🎉');
+  st.push(i);log(id,SCALE,'substep',{step:i});toast('+'+SCALE+' P 🎉');
   const it=S.items.find(x=>x.id===id)||S.queue.find(x=>x.id===id);
-  if(it&&it.subs&&st.length===it.subs.length&&!S.day.checks[id]){doCheck(it,false,1,' · Abschluss +1');if(focId===id)closeFocus(true)}
+  if(it&&it.subs&&st.length===it.subs.length&&!S.day.checks[id]){doCheck(it,false,SCALE,' · Abschluss +'+SCALE);if(focId===id)closeFocus(true)}
   else{renderGroups();if(focId===id)renderFocusSubs()}
 }
 function check(id,half){
@@ -639,14 +753,14 @@ function check(id,half){
   if(half){pts=Math.round(pts/2);note=' (halb)'}
   if(it.subs){
     const st=S.day.subs[id]||[];const rest=it.subs.length-st.length;
-    if(rest>0){for(let i=0;i<it.subs.length;i++){if(!st.includes(i))st.push(i)}S.day.subs[id]=st;log(id,rest,'substep',{bulk:true})}
-    pts=1;note=' · Abschluss';
+    if(rest>0){for(let i=0;i<it.subs.length;i++){if(!st.includes(i))st.push(i)}S.day.subs[id]=st;log(id,rest*SCALE,'substep',{bulk:true})}
+    pts=SCALE;note=' · Abschluss';
   }
   const hm=new Date().getHours()+new Date().getMinutes()/60;
   if(it.until){const lim=parseFloat(it.until);if(hm>lim){pts=0;note=' · nach '+it.until+' → 0 P (kein Malus)'}}
   if(it.deadline){const lim=parseFloat(it.deadline);
-    if(hm>lim){const over=Math.ceil((hm-lim)*2)*(it.overrunPer30||1);const m=Math.round(over*S.set.malus);
-      log(id,-m,'overrun');note=' · '+it.deadline+' überzogen −'+m+' P';}}
+    if(hm>lim){const over=Math.ceil((hm-lim)*2)*(it.overrunPer30||1);const m=Math.round(over*S.set.malus)*SCALE;
+      log(id,-m,'overrun');note=' · '+it.deadline+' überzogen −'+fmt(m)+' P';}}
   doCheck(it,half,pts,note);
 }
 function doCheck(it,half,pts,note){
@@ -657,7 +771,7 @@ function doCheck(it,half,pts,note){
   S.day.checks[id]=half?'half':true;
   const due=dueInfo(it);
   if(due&&due.malus){log(id,-due.malus,'overdue')}
-  if(due&&due.bonus){log(id,1,'daily-bonus');note=(note||'')+' · +1 Tagesbonus'}
+  if(due&&due.bonus){log(id,SCALE,'daily-bonus');note=(note||'')+' · +'+SCALE+' Tagesbonus'}
   if(it.every)S.lastDone[id]=todayStr();
   if(pts)log(id,pts,'done');
   if(it.auto&&it.auto.tick){S.day.ticks[it.auto.tick]=(S.day.ticks[it.auto.tick]||0)+1;log(it.auto.tick,1,'tick-auto')}
@@ -665,7 +779,7 @@ function doCheck(it,half,pts,note){
     if(t&&!S.day.checks[t.id]){S.day.checks[t.id]=true;log(t.id,calcPts(t),'done-auto');setTimeout(()=>toast(t.name+' automatisch mit abgehakt'),2000)}}
   if(it.timerStart){S.day.timers[id]={start:now(),min:it.timerStart}}
   if(it.w){addTemplate(it)}
-  save();toast((pts>0?'+'+pts+' P 🎉':'✓')+(note||''));renderGroups();
+  save();toast((pts>0?'+'+fmt(pts)+' P 🎉':'✓')+(note||''));renderGroups();
 }
 
 /* ---------- Fokus-Tacho ---------- */
@@ -675,10 +789,9 @@ function openFocus(id){
   if(!it||S.day.checks[id])return;
   focId=id;
   if(!S.day.focus[id])S.day.focus[id]={elapsed:0,running:true,start:now()};
-  else if(!S.day.focus[id].running){S.day.focus[id].running=true;S.day.focus[id].start=now()}
   save();
   $('#focName').textContent=it.name;
-  $('#focSub').textContent='Soll: '+(it.min||'–')+' Min · '+calcPts(it)+' P';
+  $('#focSub').textContent='Soll: '+(it.min||'–')+' Min · '+fmt(calcPts(it))+' P';
   $('#focSoll').textContent='Soll '+(it.min||'–')+' Min';
   renderFocusSubs();
   $('#focusSheet').classList.add('show');
@@ -689,7 +802,7 @@ function renderFocusSubs(){
   const it=S.items.find(x=>x.id===focId)||S.queue.find(x=>x.id===focId);
   if(!it||!it.subs){host.innerHTML='';return}
   const st=S.day.subs[it.id]||[];
-  host.innerHTML=it.subs.map((s,i)=>`<button class="${st.includes(i)?'on':''}" onclick="subTick('${it.id}',${i})">${st.includes(i)?'✓':'○'} ${s}<span class="sp">+1</span></button>`).join('');
+  host.innerHTML=it.subs.map((s,i)=>`<button class="${st.includes(i)?'on':''}" onclick="subTick('${it.id}',${i})">${st.includes(i)?'✓':'○'} ${s}<span class="sp">+${SCALE}</span></button>`).join('');
 }
 function renderFocus(){
   if(!focId)return;
@@ -723,9 +836,9 @@ function closeFocus(silent){
 function tick(id){
   const c=S.items.find(x=>x.id===id);
   const v=(S.day.ticks[id]||0)+1;S.day.ticks[id]=v;
-  if(c.ctype==='build'){log(id,c.per,'tick');toast('+'+c.per+' P')}
+  if(c.ctype==='build'){log(id,c.per*SCALE,'tick');toast('+'+fmt(c.per*SCALE)+' P')}
   else{
-    if(v>c.limit){const m=Math.round(c.malusTick*S.set.malus);log(id,-m,'over-limit');toast('−'+m+' P · '+c.name+' über Limit',1)}
+    if(v>c.limit){const m=Math.round(c.malusTick*S.set.malus)*SCALE;log(id,-m,'over-limit');toast('−'+fmt(m)+' P · '+c.name+' über Limit',1)}
     else if(v===c.limit){log(id,0,'tick');toast(c.name+' am Limit ⚠️',1)}
     else{log(id,0,'tick');toast(c.name+' '+v+' / '+c.limit)}
   }
@@ -735,42 +848,65 @@ function untick(id){
   const c=S.items.find(x=>x.id===id);
   const v=S.day.ticks[id]||0;
   if(!c||v===0)return;
-  if(c.ctype==='build'){log(id,-c.per,'tick-undo')}
-  else if(v>c.limit){log(id,Math.round(c.malusTick*S.set.malus),'tick-undo')}
+  if(c.ctype==='build'){log(id,-c.per*SCALE,'tick-undo')}
+  else if(v>c.limit){log(id,Math.round(c.malusTick*S.set.malus)*SCALE,'tick-undo')}
   else{log(id,0,'tick-undo')}
   S.day.ticks[id]=v-1;
   save();toast('↩︎ '+c.name+' zurück auf '+(v-1));renderGroups();
 }
 
-/* ---------- Warteschlange ---------- */
+/* ---------- Warteschlange (v1.3: Prio-Sortierung, Erledigt-Sektion, ▶/Tipp/Aufklappen) ---------- */
+let queueDoneOpen=false;const qExp={};
+function qSorted(){
+  const wo={muss:0,soll:1,idee:2};
+  const open=S.queue.filter(q=>!S.day.checks[q.id]).slice().sort((a,b)=>(wo[a.w]-wo[b.w])||((b.pushedDays||0)-(a.pushedDays||0))||(calcPts(b)-calcPts(a)));
+  const done=S.queue.filter(q=>!!S.day.checks[q.id]);
+  return{open,done};
+}
+function qCard(q,isDone){
+  const pts=calcPts(q),exp=!!qExp[q.id];
+  const pd=S.day.pushed[q.id]||q.pushedDays||0;
+  const rate=q.w==='muss'?.2:q.w==='soll'?.1:0;
+  const mal=Math.round(pts*rate*pd*S.set.malus);
+  let cls='item'+(isDone?' done':q.w==='muss'?' b-bad':q.w==='soll'?' b-warn':'');
+  if(focState(q.id))cls+=' running';
+  const subsRow=q.subs?'<div class="subrow">'+q.subs.map((s,i)=>`<button class="${(S.day.subs[q.id]||[]).includes(i)?'on':''}" onclick="event.stopPropagation();subTick('${q.id}',${i})">${(S.day.subs[q.id]||[]).includes(i)?'✓':'○'} ${s}<span class="sp">+${SCALE}</span></button>`).join('')+'</div>':'';
+  const det=`<div class="qdetail${exp?' show':''}"><div class="qact">${isDone?
+    `<button onclick="event.stopPropagation();uncheck('${q.id}')">↩︎ wieder offen</button><button onclick="event.stopPropagation();editTask('${q.id}')">✎ Bearbeiten (rückwirkend)</button>`:
+    `<button onclick="event.stopPropagation();pushTask('${q.id}')">→ schieben</button><button onclick="event.stopPropagation();editTask('${q.id}')">✎ Bearbeiten</button>`}</div></div>`;
+  return `<div class="${cls}" onclick="${isDone?`uncheck('${q.id}')`:`check('${q.id}')`}">
+    ${isDone?'':`<button class="playbtn" onclick="event.stopPropagation();openFocus('${q.id}')">▶</button>`}
+    <div class="iname">${q.name} <span class="badge ${q.w}">${q.w.toUpperCase()}</span>${q.fromTpl?' <span class="bonus">📋 Vorlage</span>':''}${runChip(q.id)}
+    <span class="isub">${q.min} Min · ${q.k} · ${q.e} → ${fmt(pts)} P${isDone?' · Tipp = wieder offen':''}</span>
+    ${pd?`<span class="malus">${pd}× geschoben · Malus −${fmt(mal)} P (−${rate*100} %/Tag)</span>`:''}
+    ${subsRow}${det}</div>
+    <span class="pts">${isDone?'✓ ':''}+${fmt(pts)}</span>
+    <button class="expbtn${exp?' open':''}" onclick="event.stopPropagation();qExp['${q.id}']=!qExp['${q.id}'];renderGroups()">▾</button></div>`;
+}
 function renderQueue(){
-  let h='';
-  S.queue.forEach((q,idx)=>{
-    const done=!!S.day.checks[q.id];
-    const pd=S.day.pushed[q.id]||q.pushedDays||0;
-    const rate=q.w==='muss'?.2:q.w==='soll'?.1:0;
-    const mal=Math.round(calcPts(q)*rate*pd*S.set.malus);
-    let cls='item'+(done?' done':q.w==='muss'?' b-bad':q.w==='soll'?' b-warn':'');
-    if(focState(q.id))cls+=' running';
-    const tap=done?'':`onclick="openFocus('${q.id}')"`;
-    h+=`<div class="${cls}" ${tap}><div class="qbtns"><button onclick="event.stopPropagation();qMove(${idx},-1)">▲</button><button onclick="event.stopPropagation();qMove(${idx},1)">▼</button></div>
-      <div class="iname">${q.name} <span class="badge ${q.w}">${q.w.toUpperCase()}</span>${q.fromTpl?' <span class="bonus">📋 Vorlage</span>':''}${runChip(q.id)}
-      <span class="isub">${q.min} Min · ${q.k} · ${q.e} → ${calcPts(q)} P</span>
-      ${pd?`<span class="malus">${pd}× geschoben · Malus −${mal} P (−${rate*100} %/Tag)</span>`:''}
-      ${q.subs?'<div class="subrow">'+q.subs.map((s,i)=>`<button class="${(S.day.subs[q.id]||[]).includes(i)?'on':''}" onclick="event.stopPropagation();subTick('${q.id}',${i})">${(S.day.subs[q.id]||[]).includes(i)?'✓':'○'} ${s}<span class="sp">+1</span></button>`).join('')+'</div>':''}
-      ${done?'':`<div class="qact"><button onclick="event.stopPropagation();pushTask('${q.id}')">→ schieben</button><button onclick="event.stopPropagation();editTask('${q.id}')">✎ Bearbeiten</button></div>`}
-      </div><span class="pts">+${calcPts(q)}</span><button class="chk" onclick="event.stopPropagation();check('${q.id}')">${done?'✓':''}</button></div>`;
-  });
+  const s=qSorted();let h='';
+  s.open.forEach(q=>{h+=qCard(q,false)});
+  if(s.done.length){
+    const dp=s.done.reduce((a,q)=>a+calcPts(q),0);
+    h+=`<div class="donehead" onclick="queueDoneOpen=!queueDoneOpen;renderGroups()"><span>✓ Erledigt (${s.done.length})</span><span style="margin-left:auto" class="mono">+${fmt(dp)} P</span><span class="chev" style="transform:rotate(${queueDoneOpen?180:0}deg)">▾</span></div>`;
+    if(queueDoneOpen)s.done.forEach(q=>{h+=qCard(q,true)});
+  }
   h+=`<button class="addbtn" onclick="startNew()">＋ Neu · Aufgabe / Routine / Counter</button>`;
   return h;
 }
-function qMove(i,d){const j=i+d;if(j<0||j>=S.queue.length)return;[S.queue[i],S.queue[j]]=[S.queue[j],S.queue[i]];save();renderGroups()}
+function uncheck(id){
+  if(!S.day.checks[id])return;
+  delete S.day.checks[id];
+  const kill=k=>{for(let i=S.day.ledger.length-1;i>=0;i--){const e=S.day.ledger[i];if(e.id===id&&e.kind===k){S.day.ledger.splice(i,1);return}}};
+  kill('done');kill('daily-bonus');
+  save();toast('↩︎ wieder offen');renderGroups();
+}
 function pushTask(id){
   const q=S.queue.find(x=>x.id===id);
   S.day.pushed[id]=(S.day.pushed[id]||0)+1;q.pushedDays=(q.pushedDays||0)+1;
   const rate=q.w==='muss'?.2:q.w==='soll'?.1:0;
   const m=Math.round(calcPts(q)*rate*S.set.malus);
-  if(m>0){log(id,-m,'pushed');toast('→ geschoben · −'+m+' P Malus ('+q.w.toUpperCase()+')',1)}
+  if(m>0){log(id,-m,'pushed');toast('→ geschoben · −'+fmt(m)+' P Malus ('+q.w.toUpperCase()+')',1)}
   else toast('→ geschoben · IDEE = 0 Malus');
   save();renderGroups();
 }
@@ -798,12 +934,16 @@ function renderNeu(){
   chipRow('#fFreq',[{v:'daily',l:'täglich'},{v:'2',l:'alle 2 Tage'},{v:'3',l:'alle 3 Tage'},{v:'7',l:'1×/Woche'}],F.freq,'fSet_freq');
   $('#fWichtWrap').style.display=F.typ==='aufgabe'?'block':'none';
   $('#fFreqWrap').style.display=F.typ==='routine'?'block':'none';
-  $('#fPts').textContent='≈ '+Math.max(1,Math.round((F.min/5)*KV[F.k]*EV[F.e]))+' P';
+  const fstd=[5,15,30,60,120];$('#fMinFree').value=fstd.includes(F.min)?'':F.min;
+  $('#fPts').textContent='≈ '+fmt(Math.max(1,Math.round((F.min/5)*KV[F.k]*EV[F.e]))*SCALE)+' P';
   const tl=$('#tplList');
   if(S.templates.length){tl.innerHTML=S.templates.slice().reverse().slice(0,5).map((t,i)=>
     `<div class="tpl"><span>📋</span><span class="n">${t.name}${t.subs?' · '+t.subs.length+' Unteraufgaben':''}<br><span class="small">zuletzt ${t.last}${t.ist?' · Ø '+t.ist+' Min':''} · ${t.used}× genutzt</span></span><button class="use" onclick="useTpl(${S.templates.length-1-i})">übernehmen</button></div>`).join('')}
 }
 function fSet_typ(v){F.typ=v;renderNeu()}function fSet_min(v){F.min=+v;renderNeu()}
+function fMinFreeIn(el){const n=+el.value;if(!n)return;F.min=Math.max(1,Math.min(960,n));
+  document.querySelectorAll('#fMin button').forEach(b=>b.classList.remove('sel'));
+  $('#fPts').textContent='≈ '+fmt(Math.max(1,Math.round((F.min/5)*KV[F.k]*EV[F.e]))*SCALE)+' P'}
 function fSet_k(v){F.k=v;renderNeu()}function fSet_e(v){F.e=v;renderNeu()}function fSet_w(v){F.w=v;renderNeu()}function fSet_freq(v){F.freq=v;renderNeu()}
 function useTpl(i){const t=S.templates[i];F.min=t.min;F.k=t.k;F.e=t.e;F.w=t.w||'soll';
   $('#fName').value=t.name;$('#fSubs').value=(t.subs||[]).join('\n');F._tpl=true;renderNeu();toast('Vorlage übernommen')}
@@ -813,7 +953,9 @@ function saveNew(){
   const subs=$('#fSubs').value.trim()?$('#fSubs').value.split(/\n|·/).map(s=>s.trim()).filter(Boolean):null;
   if(F.editId){
     const q=S.queue.find(x=>x.id===F.editId);
-    if(q){q.name=name;q.min=F.min;q.k=F.k;q.e=F.e;q.w=F.w;q.subs=subs;addTemplate(q)}
+    if(q){q.name=name;q.min=F.min;q.k=F.k;q.e=F.e;q.w=F.w;q.subs=subs;addTemplate(q);
+      if(S.day.checks[q.id]){const led=S.day.ledger.filter(x=>x.id===q.id&&x.kind==='done').pop();
+        if(led)led.p=S.day.checks[q.id]==='half'?Math.round(calcPts(q)/2):calcPts(q)}}
     F.editId=null;F._tpl=false;$('#fName').value='';$('#fSubs').value='';
     save();toast('✏️ aktualisiert');show('home',document.querySelector('[data-v=home]'));renderGroups();return;
   }
@@ -846,15 +988,49 @@ const SE={min:60,f:1};
 function renderSession(){
   chipRow('#sMin',[30,60,90,120].map(v=>({v,l:v+' Min'})),SE.min,'sSet_min');
   chipRow('#sFocus',[{v:0.5,l:'😮‍💨 zäh ×0,5'},{v:1,l:'🙂 solide ×1'},{v:1.5,l:'🔥 Flow ×1,5'}],SE.f,'sSet_f');
+  const sstd=[30,60,90,120];$('#sMinFree').value=sstd.includes(SE.min)?'':SE.min;
   $('#sBattLbl').textContent='−'+$('#sBatt').value+' % Akku';
-  $('#sPts').textContent='+'+Math.round((SE.min/5)*SE.f)+' P';
+  $('#sPts').textContent='+'+fmt(Math.round((SE.min/5)*SE.f)*SCALE)+' P';
 }
 function sSet_min(v){SE.min=+v;renderSession()}function sSet_f(v){SE.f=+v;renderSession()}
+function sMinFreeIn(el){const n=+el.value;if(!n)return;SE.min=Math.max(1,Math.min(960,n));
+  document.querySelectorAll('#sMin button').forEach(b=>b.classList.remove('sel'));
+  $('#sPts').textContent='+'+fmt(Math.round((SE.min/5)*SE.f)*SCALE)+' P'}
 function bookSession(){
-  const p=Math.round((SE.min/5)*SE.f),b=+$('#sBatt').value;
+  const p=Math.round((SE.min/5)*SE.f)*SCALE,b=+$('#sBatt').value;
   log('session',p,'session',{min:SE.min,f:SE.f,batt:b});
   S.day.battery=Math.max(0,S.day.battery-b);S.day.sessions++;
-  save();toast('💼 +'+p+' P · Akku −'+b+' %');show('home',document.querySelector('[data-v=home]'));renderGroups();
+  save();toast('💼 +'+fmt(p)+' P · Akku −'+b+' %');show('home',document.querySelector('[data-v=home]'));renderGroups();
+}
+
+/* ---------- Quick-Log (v1.3) ---------- */
+const QL={sign:1,min:15,k:'leicht'};
+function qlPts(){return Math.max(1,Math.round((QL.min/5)*KV[QL.k]))*SCALE*QL.sign}
+function qlBookLbl(){const b=$('#qlBook');b.classList.toggle('neg',QL.sign<0);
+  b.textContent=(QL.sign>0?'＋ ':'− ')+fmt(Math.abs(qlPts()))+' P '+(QL.sign>0?'buchen':'Malus buchen')}
+function renderQL(){
+  if(!document.getElementById('qlMin'))return;
+  chipRow('#qlMin',[5,15,30,60].map(v=>({v,l:v})),QL.min,'qlSet_min');
+  chipRow('#qlK',['leicht','mittel','schwer'].map(v=>({v,l:v})),QL.k,'qlSet_k');
+  const std=[5,15,30,60];$('#qlMinFree').value=std.includes(QL.min)?'':QL.min;
+  $('#qlSign').textContent=QL.sign>0?'＋':'−';$('#qlSign').classList.toggle('neg',QL.sign<0);
+  qlBookLbl();
+  const avg=n=>{const s=S.history.slice(-n);return s.length?Math.round(s.reduce((a,x)=>a+x.score,0)/s.length):null};
+  $('#qlAvg').innerHTML='Ø3 <b class="mono">'+fmt0(avg(3))+'</b> · Ø7 <b class="mono">'+fmt0(avg(7))+'</b> · Ø14 <b class="mono">'+fmt0(avg(14))+'</b> → 🎯 Ziel <b class="mono">'+fmt(S.set.goal)+'</b> ✎';
+  $('#qlGoalVal').textContent=fmt(S.set.goal);
+}
+function qlSet_min(v){QL.min=+v;renderQL()}
+function qlSet_k(v){QL.k=v;renderQL()}
+function qlFree(v){const n=+v;if(!n)return;QL.min=Math.max(1,Math.min(960,n));
+  document.querySelectorAll('#qlMin button').forEach(b=>b.classList.remove('sel'));qlBookLbl()}
+function qlToggleSign(){QL.sign*=-1;renderQL()}
+function qlGoalTgl(){const g=$('#qlGoal');g.style.display=g.style.display==='none'?'flex':'none'}
+function qlBook(){
+  const p=qlPts(),name=($('#qlName').value.trim()||'Quick-Eintrag');
+  log('quick',p,'quick',{n:name,min:QL.min,k:QL.k});
+  $('#qlName').value='';
+  toast((p>0?'+':'−')+fmt(Math.abs(p))+' P · '+name,p<0);
+  renderGroups();
 }
 
 /* ---------- Sekunden-Ticks ---------- */
@@ -870,6 +1046,8 @@ setInterval(()=>{
   for(const[id,f]of Object.entries(S.day.focus)){
     const el=document.getElementById('run-'+id);
     if(el)el.textContent=fmtMS(focElapsed(f));
+    const el2=document.getElementById('runt-'+id);
+    if(el2)el2.textContent=fmtMS(focElapsed(f));
   }
   renderFocus();
 },1000);
@@ -888,7 +1066,7 @@ function buildCSV(){
   const nameOf=id=>{const x=S.items.find(i=>i.id===id)||S.queue.find(q=>q.id===id);return x?x.name.replace(/;/g,','):id};
   for(const e of S.day.ledger){
     const x=S.items.find(i=>i.id===e.id)||S.queue.find(q=>q.id===e.id)||{};
-    rows.push([d,nameOf(e.id),x.typ||e.kind,x.gr||'',x.min||'',S.day.ist[e.id]||'',e.p>0?e.p:'',e.p<0?-e.p:'',S.day.pushed[e.id]||'',
+    rows.push([d,(e.n?String(e.n).replace(/;/g,','):nameOf(e.id)),x.typ||e.kind,x.gr||'',x.min||e.min||'',S.day.ist[e.id]||'',e.p>0?e.p:'',e.p<0?-e.p:'',S.day.pushed[e.id]||'',
       e.id==='elvanse'&&S.day.mg.elvanse?S.day.mg.elvanse+'mg':x.ctype==='limit'?(S.day.ticks[e.id]||0)+'/'+x.limit:e.kind].join(';'));
   }
   rows.push([d,'akku','system','','','','','','',(S.day.battery)+'%'].join(';'));
@@ -900,8 +1078,8 @@ function openFinish(){
   if(!S.day.checks.reflexion){S.day.checks.reflexion=true;log('reflexion',calcPts(S.items.find(i=>i.id==='reflexion')),'done')}
   const sum=daySummary();
   $('#finTitle').textContent='🌇 Tagesbilanz · '+fmtDate();
-  $('#finScore').textContent=sum.score+' P';$('#finGoal').textContent=S.set.goal+' P';
-  $('#finPlus').textContent='+'+sum.plus;$('#finMinus').textContent='−'+sum.minus;
+  $('#finScore').textContent=fmt(sum.score)+' P';$('#finGoal').textContent=fmt(S.set.goal)+' P';
+  $('#finPlus').textContent='+'+fmt(sum.plus);$('#finMinus').textContent='−'+fmt(sum.minus);
   $('#csvPrev').textContent=buildCSV();
   $('#finSheet').classList.add('show');renderGroups();
 }
@@ -916,7 +1094,7 @@ function finishDay(){
   S.day.refE=+$('#refE').value;
   S.history.push({date:S.day.date,score:sum.score,plus:sum.plus,minus:sum.minus,refE:S.day.refE,refS:+$('#refS').value,refM:+$('#refM').value,
     ledger:S.day.ledger,ist:S.day.ist,pushed:S.day.pushed});
-  if(S.history.length>120)S.history=S.history.slice(-120);
+  capHistory();
   S.queue=S.queue.filter(q=>!S.day.checks[q.id]);
   const batt=S.set.battFromRef?S.day.refE:70;
   S.day=freshDay(batt);
@@ -925,38 +1103,110 @@ function finishDay(){
   renderGroups();
 }
 
-/* ---------- Stats ---------- */
+/* ---------- Stats (v1.3: Tage · Wochen · Monate · Gesamt) ---------- */
+let STV='tage';const dExp={};
+function statTab(t,btn){STV=t;document.querySelectorAll('#statSeg button').forEach(b=>b.classList.toggle('on',b===btn));renderStats()}
+function labelOf(id,e){if(e&&e.n)return e.n;if(id==='quick')return'⚡ Quick';if(id==='session')return'💼 Session';if(id==='streak')return'🔥 Streak';
+  const x=S.items.find(i=>i.id===id)||S.queue.find(q=>q.id===id);return x?x.name:id}
+function allEntries(){const sum=daySummary();
+  return[...S.history,{date:S.day.date,score:sum.score,plus:sum.plus,minus:sum.minus,today:true,ledger:S.day.ledger,ist:S.day.ist,refE:S.day.refE}]}
+function isoW(ds){const d=new Date(ds+'T12:00'),t=new Date(d);t.setDate(d.getDate()+3-((d.getDay()+6)%7));
+  const w1=new Date(t.getFullYear(),0,4);const wn=1+Math.round(((t-w1)/864e5-3+((w1.getDay()+6)%7))/7);
+  return String(t.getFullYear()).slice(2)+'·KW'+String(wn).padStart(2,'0')}
+function groupBy(fn){const m={},ord=[];
+  for(const e of allEntries()){const k=fn(e.date);if(!m[k]){m[k]={key:k,sum:0,n:0,best:0};ord.push(k)}m[k].sum+=e.score;m[k].n++;if(e.score>m[k].best)m[k].best=e.score}
+  return ord.map(k=>({...m[k],avg:Math.round(m[k].sum/m[k].n)}))}
+function moLbl(key){return new Date(key+'-15T12:00').toLocaleDateString('de-DE',{month:'short',year:'2-digit'})}
+function barCss(v,goal){const w=Math.max(3,Math.min(115,Math.round(v/goal*100)));
+  const g=v>=goal?'#3ecf8e,#6dd3e0':v>=goal*.7?'#f2b84b,#f2b84b':'#d84f4f,#f66d6d';
+  return `style="width:${w}%;background:linear-gradient(90deg,${g})"`}
+function drawCurve(vals,goal){
+  const svg=$('#curve');
+  if(vals.length<2){svg.innerHTML='<text x="180" y="68" text-anchor="middle" font-size="11" fill="#8fa1b8">Noch zu wenig Tage für eine Kurve</text>';return}
+  const mx=Math.max(goal*1.05,...vals,1),mn=Math.min(0,...vals);
+  const Y=v=>130-((v-mn)/(mx-mn||1))*(130-6)-3;
+  const pth=smoothPath(vals,360,130,mx,mn),last=vals[vals.length-1];
+  svg.innerHTML=`<defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(62,207,142,.32)"/><stop offset="1" stop-color="rgba(62,207,142,0)"/></linearGradient></defs>
+   <line x1="0" y1="${Y(goal).toFixed(1)}" x2="360" y2="${Y(goal).toFixed(1)}" stroke="#243349" stroke-dasharray="4 5"/>
+   <text x="4" y="${(Y(goal)-4).toFixed(1)}" font-size="9" fill="#8fa1b8">Ziel ${fmt(goal)}</text>
+   <path d="${pth} L 360 130 L 0 130 Z" fill="url(#cg)"/>
+   <path d="${pth}" fill="none" stroke="#3ecf8e" stroke-width="2.5" stroke-linecap="round"/>
+   <circle cx="360" cy="${Y(last).toFixed(1)}" r="4" fill="#3ecf8e"/>`;
+}
+function kpiHtml(a){return a.map(x=>`<div class="card"><span class="small">${x.l}</span><br><b class="mono">${x.v}</b></div>`).join('')}
 function renderStats(){
-  const h=S.history.slice(-30);
-  const bars=$('#bars');bars.innerHTML='';
-  const goal=S.set.goal,max=Math.max(goal*1.1,...h.map(x=>x.score),1);
-  for(const day of h.slice(-14)){
-    const pct=Math.max(3,Math.round(day.score/max*100));
-    const cls=day.score>=goal?'':day.score>=goal*.7?'mid':'low';
-    bars.innerHTML+=`<div class="${cls}" style="height:${pct}%"><span>${day.date.slice(8)}</span></div>`;
+  const goal=S.set.goal,E=allEntries();
+  let vals=[],kpis=[],list='',title='';
+  const avgN=n=>{const s=E.slice(-n);return s.length?Math.round(s.reduce((a,b)=>a+b.score,0)/s.length):null};
+  if(STV==='tage'){
+    title='Tage · antippen für Detail';
+    const rows=E.slice(-30);vals=rows.map(x=>x.score);
+    kpis=[{l:'Ø 7 Tage',v:fmt0(avgN(7))},{l:'Ø 30 Tage',v:fmt0(avgN(30))},{l:'Beste (30 T)',v:rows.length?fmt(Math.max(...vals)):'–'}];
+    list=rows.slice().reverse().map(e=>{
+      const d=new Date(e.date+'T12:00'),op=!!dExp[e.date];
+      const istM=Object.values(e.ist||{}).reduce((a,b)=>a+b,0);
+      return `<div class="dayrow" onclick="dExp['${e.date}']=!dExp['${e.date}'];renderStats()">
+        <div class="dl"><b>${d.toLocaleDateString('de-DE',{weekday:'short',day:'2-digit'})}.</b><span>${e.today?'heute':d.toLocaleDateString('de-DE',{month:'short'})}${e.auto?' · auto':''}</span></div>
+        <div class="dbar"><i ${barCss(e.score,goal)}></i></div>
+        <div class="dv">${fmt(e.score)} · ${Math.round(e.score/goal*100)} %</div></div>
+      <div class="ddet${op?' show':''}">
+        <div><span>Plus / Minus</span><em style="font-style:normal;color:var(--ok)">+${fmt(e.plus||0)}</em> / <em style="font-style:normal;color:var(--bad)">−${fmt(e.minus||0)}</em></div>
+        <div><span>Reflexion</span>${e.refE!=null?('⚡ '+e.refE+(e.refS!=null?' · 🙂 '+e.refS:'')+(e.refM!=null?' · 🔥 '+e.refM:'')):'–'}</div>
+        <div><span>Fokus-Ist</span>${istM?istM+' Min':'–'}</div>
+        <div><span>Status</span>${e.today?'läuft':e.auto?'auto-geschlossen':'abgeschlossen'}</div>
+      </div>`}).join('');
+  }else if(STV==='wochen'||STV==='monate'){
+    const wk=STV==='wochen';
+    const g=wk?groupBy(isoW):groupBy(ds=>ds.slice(0,7));
+    title=wk?'Wochen · Ø pro Tag':'Monate · Ø pro Tag';
+    const rows=g.slice(-26);vals=rows.map(x=>x.avg);
+    const cur=g[g.length-1],prev=g[g.length-2];
+    kpis=[{l:'Ø/Tag aktuell',v:cur?fmt(cur.avg):'–'},{l:'Ø/Tag zuvor',v:prev?fmt(prev.avg):'–'},{l:wk?'Beste Woche Ø':'Bester Monat Ø',v:g.length?fmt(Math.max(...g.map(x=>x.avg))):'–'}];
+    list=rows.slice().reverse().map(x=>{
+      const lbl=wk?x.key:moLbl(x.key);
+      return `<div class="dayrow"><div class="dl"><b>${lbl}</b><span>${x.n} Tage</span></div><div class="dbar"><i ${barCss(x.avg,goal)}></i></div><div class="dv">Ø ${fmt(x.avg)} · Σ ${fmt(x.sum)}</div></div>`}).join('');
+  }else{
+    title='Gesamt · Meilensteine';
+    let all=E.map(x=>x.score);
+    if(all.length>120){const b=[],sz=all.length/120;
+      for(let i=0;i<120;i++){const s=all.slice(Math.floor(i*sz),Math.floor((i+1)*sz)+1);b.push(Math.round(s.reduce((a,c)=>a+c,0)/Math.max(s.length,1)))}all=b}
+    vals=all;
+    const sumAll=E.reduce((a,b)=>a+b.score,0);
+    kpis=[{l:'Ø/Tag gesamt',v:E.length?fmt(Math.round(sumAll/E.length)):'–'},{l:'Σ Punkte',v:fmt(sumAll)},{l:'Tage erfasst',v:E.length}];
+    const bd=E.slice().sort((a,b)=>b.score-a.score)[0];
+    const bw=groupBy(isoW).sort((a,b)=>b.avg-a.avg)[0];
+    const bm=groupBy(ds=>ds.slice(0,7)).sort((a,b)=>b.avg-a.avg)[0];
+    let st=0,mxs=0;for(const e of E){if(e.score>=goal){st++;if(st>mxs)mxs=st}else st=0}
+    list=[
+      bd?`🏆 Bester Tag<b class="mono" style="margin-left:auto">${bd.date.slice(8)}.${bd.date.slice(5,7)}. · ${fmt(bd.score)}</b>`:null,
+      bw?`📅 Beste Woche<b class="mono" style="margin-left:auto">${bw.key} · Ø ${fmt(bw.avg)}</b>`:null,
+      bm?`🗓 Bester Monat<b class="mono" style="margin-left:auto">${moLbl(bm.key)} · Ø ${fmt(bm.avg)}</b>`:null,
+      `🔥 Längster Streak<b class="mono" style="margin-left:auto">${mxs} Tage über Ziel</b>`
+    ].filter(Boolean).map(x=>`<div class="dayrow">${x}</div>`).join('');
   }
-  $('#goalline').style.bottom=(24+Math.round(goal/max*110))+'px';
-  const avg=n=>{const s=h.slice(-n);return s.length?Math.round(s.reduce((a,b)=>a+b.score,0)/s.length):null};
-  $('#s7').textContent=(avg(7)??'–')+' P';$('#s30').textContent=(avg(30)??'–')+' P';
-  $('#sBest').textContent=h.length?Math.max(...h.map(x=>x.score))+' P':'–';
+  $('#listTitle').textContent=title;
+  drawCurve(vals,goal);
+  $('#statKpi').innerHTML=kpiHtml(kpis);
+  $('#statList').innerHTML=list||'<span class="small">Noch keine Daten.</span>';
+  const h=S.history.slice(-30);
   const minus={};
-  for(const day of h){for(const e of(day.ledger||[])){if(e.p<0){minus[e.id]=(minus[e.id]||0)-e.p}}}
-  for(const e of S.day.ledger){if(e.p<0)minus[e.id]=(minus[e.id]||0)-e.p}
-  const nameOf=id=>{const x=S.items.find(i=>i.id===id)||S.queue.find(q=>q.id===id);return x?x.name:id};
+  const addM=e=>{if(e.p<0){const k=labelOf(e.id,e);minus[k]=(minus[k]||0)-e.p}};
+  for(const day of h){for(const e of(day.ledger||[]))addM(e)}
+  for(const e of S.day.ledger)addM(e);
   const ml=Object.entries(minus).sort((a,b)=>b[1]-a[1]).slice(0,5);
-  $('#minusList').innerHTML=ml.length?ml.map(([id,v])=>`<div class="prob"><span>${nameOf(id)}</span><b>−${v} P</b></div>`).join(''):'<span class="small">Noch keine Minuspunkte. 💪</span>';
+  $('#minusList').innerHTML=ml.length?ml.map(([n,v])=>`<div class="prob"><span>${n}</span><b>−${fmt(v)} P</b></div>`).join(''):'<span class="small">Noch keine Minuspunkte. 💪</span>';
   const dev={};
   const collect=(ist)=>{for(const[id,m]of Object.entries(ist||{})){const x=S.items.find(i=>i.id===id)||S.queue.find(q=>q.id===id);
     if(x&&x.min){(dev[x.name]=dev[x.name]||{soll:x.min,ist:[]}).ist.push(m)}}};
   for(const day of h)collect(day.ist);collect(S.day.ist);
   const dl=Object.entries(dev).map(([n,d])=>{const ai=Math.round(d.ist.reduce((a,b)=>a+b,0)/d.ist.length);
-    const p=Math.round((ai/d.soll-1)*100);return{n,soll:d.soll,ai,p}}).sort((a,b)=>Math.abs(b.p)-Math.abs(a.p)).slice(0,5);
-  if(dl.length)$('#devList').innerHTML=dl.map(d=>`<div class="prob"><span>${d.n}</span><span class="mono">${d.soll} → Ø ${d.ai} Min <b style="color:${d.p>0?'var(--bad)':'var(--ok)'}">${d.p>0?'+':''}${d.p} %</b></span></div>`).join('');
+    const pr=Math.round((ai/d.soll-1)*100);return{n,soll:d.soll,ai,pr}}).sort((a,b)=>Math.abs(b.pr)-Math.abs(a.pr)).slice(0,5);
+  $('#devList').innerHTML=dl.length?dl.map(d=>`<div class="prob"><span>${d.n}</span><span class="mono">${d.soll} → Ø ${d.ai} Min <b style="color:${d.pr>0?'var(--bad)':'var(--ok)'}">${d.pr>0?'+':''}${d.pr} %</b></span></div>`).join(''):'<span class="small">Fokus-Timer nutzen, dann erscheinen hier Soll/Ist-Vergleiche.</span>';
 }
 
 /* ---------- Settings ---------- */
 function renderSet(){
-  $('#setGoal').textContent=S.set.goal;
+  $('#setGoal').textContent=fmt(S.set.goal);
   $('#setMalus').textContent='× '+S.set.malus.toFixed(1).replace('.',',');
   $('#setBlock').textContent=S.set.block+' %';
   $('#swStreak').classList.toggle('on',S.set.streak);
@@ -966,10 +1216,10 @@ function renderSet(){
   $('#setHist').textContent=S.history.length+' Tage';
 }
 function setAdj(k,d){
-  if(k==='goal')S.set.goal=Math.max(10,S.set.goal+d);
+  if(k==='goal')S.set.goal=Math.max(1000,S.set.goal+d);
   if(k==='malus')S.set.malus=Math.max(.5,Math.min(1.5,Math.round((S.set.malus+d)*10)/10));
   if(k==='block')S.set.block=Math.max(0,Math.min(15,S.set.block+d));
-  save();renderSet();renderHeader();renderBatt();
+  save();renderSet();renderHeader();renderBatt();renderQL();
 }
 function setTgl(k,el){S.set[k]=!S.set[k];el.classList.toggle('on');save()}
 function hardReset(){if(confirm('Wirklich ALLE Daten löschen?')){try{localStorage.removeItem('routinen_v1')}catch(e){};location.reload()}}
@@ -979,7 +1229,7 @@ load();
 setInterval(()=>{
   if(!S.set.streak)return;
   const sum=daySummary();
-  if(sum.score>=S.set.goal&&!S.day.ledger.some(e=>e.kind==='streak')){log('streak',3,'streak');toast('🔥 Tagesziel erreicht · +3 Streak-Bonus');renderGroups()}
+  if(sum.score>=S.set.goal&&!S.day.ledger.some(e=>e.kind==='streak')){log('streak',3*SCALE,'streak');toast('🔥 Tagesziel erreicht · +'+fmt(3*SCALE)+' Streak-Bonus');renderGroups()}
 },4000);
 renderGroups();renderSession();renderSet();
 /* Offline-Fähigkeit: Service Worker (guarded) */
