@@ -231,6 +231,11 @@ input[type=text],input[type=number],textarea{width:100%;background:#0b111c;borde
 .ddet>div{background:var(--card2);border:1px solid var(--line);border-radius:11px;padding:8px 10px;font-size:.7rem}
 .ddet span{display:block;color:var(--mut);font-size:.56rem}
 .ftile{border-color:rgba(109,211,224,.55)!important}
+.tlrow{display:flex;align-items:center;gap:8px;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:7px 10px;margin-top:6px;font-size:.7rem}
+.tlrow span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tlrow em{font-style:normal;color:var(--mut);font-size:.58rem}
+.tldel{width:36px;height:36px;border-radius:9px;border:1px solid rgba(246,109,109,.4);background:none;color:var(--bad);flex:none}
+.mini{border:1px solid var(--line);background:var(--card2);border-radius:10px;padding:9px 14px;font-size:.74rem;color:var(--txt);min-height:38px;display:inline-flex;align-items:center}
 </style>
 </head>
 <body>
@@ -291,6 +296,8 @@ input[type=text],input[type=number],textarea{width:100%;background:#0b111c;borde
       <div class="ql-goal" id="qlGoal" style="display:none">
         <button onclick="setAdj('goal',-100)">−</button><b class="mono" id="qlGoalVal"></b><button onclick="setAdj('goal',100)">＋</button>
       </div>
+      <div class="ql-avg" id="tlHead" onclick="tlOpen=!tlOpen;renderQL()" style="margin-top:7px">🧾 Heute-Protokoll</div>
+      <div id="tlList"></div>
     </div>
   </div>
 
@@ -380,11 +387,14 @@ input[type=text],input[type=number],textarea{width:100%;background:#0b111c;borde
   <div class="card">
     <h2 style="margin-top:0">🗂 Verwaltung</h2>
     <div class="row"><span class="lbl">Aktive Routinen &amp; Counter</span><span class="small" id="setCount"></span></div>
+    <div id="ownList"></div>
     <div class="row"><span class="lbl">Vorlagen im Archiv</span><span class="small" id="setTpl"></span></div>
     <div class="row"><span class="lbl">Tage in der Historie</span><span class="small" id="setHist"></span></div>
+    <div class="row"><span class="lbl">💾 Backup exportieren<br><span class="small">kompletter Stand als Datei — vor jeder Neu-Installation!</span></span><button class="mini" onclick="expBackup()">Export</button></div>
+    <div class="row"><span class="lbl">📥 Backup einspielen<br><span class="small">ersetzt den aktuellen Stand durch die Datei</span></span><label class="mini">Import<input type="file" id="impFile" accept=".json,application/json" style="display:none" onchange="impBackup(this)"></label></div>
     <div class="row"><span class="lbl" style="color:var(--bad)">Alle Daten zurücksetzen</span><button style="border:1px solid rgba(246,109,109,.5);color:var(--bad);border-radius:9px;padding:5px 10px;background:none" onclick="hardReset()">Reset</button></div>
   </div>
-  <p class="note">Kein Löschen einzelner Einträge — Routinen werden archiviert und bleiben in der Auswertung. Alles liegt on-device, die App braucht nach der Installation nie Internet.</p>
+  <p class="note">Löschen ist überall möglich: Buchungen im Heute-Protokoll (Quick-Log-Karte), Aufgaben über ▾ → 🗑, selbst angelegte Routinen/Counter hier oben, vergangene Tage in der Auswertung. Alles liegt on-device, die App braucht nach der Installation nie Internet.</p>
 </div>
 
 <!-- Navigation -->
@@ -872,8 +882,8 @@ function qCard(q,isDone){
   if(focState(q.id))cls+=' running';
   const subsRow=q.subs?'<div class="subrow">'+q.subs.map((s,i)=>`<button class="${(S.day.subs[q.id]||[]).includes(i)?'on':''}" onclick="event.stopPropagation();subTick('${q.id}',${i})">${(S.day.subs[q.id]||[]).includes(i)?'✓':'○'} ${s}<span class="sp">+${SCALE}</span></button>`).join('')+'</div>':'';
   const det=`<div class="qdetail${exp?' show':''}"><div class="qact">${isDone?
-    `<button onclick="event.stopPropagation();uncheck('${q.id}')">↩︎ wieder offen</button><button onclick="event.stopPropagation();editTask('${q.id}')">✎ Bearbeiten (rückwirkend)</button>`:
-    `<button onclick="event.stopPropagation();pushTask('${q.id}')">→ schieben</button><button onclick="event.stopPropagation();editTask('${q.id}')">✎ Bearbeiten</button>`}</div></div>`;
+    `<button onclick="event.stopPropagation();uncheck('${q.id}')">↩︎ wieder offen</button><button onclick="event.stopPropagation();editTask('${q.id}')">✎ Bearbeiten (rückwirkend)</button><button style="color:var(--bad);border-color:rgba(246,109,109,.5)" onclick="event.stopPropagation();delTask('${q.id}')">🗑 Löschen</button>`:
+    `<button onclick="event.stopPropagation();pushTask('${q.id}')">→ schieben</button><button onclick="event.stopPropagation();editTask('${q.id}')">✎ Bearbeiten</button><button style="color:var(--bad);border-color:rgba(246,109,109,.5)" onclick="event.stopPropagation();delTask('${q.id}')">🗑 Löschen</button>`}</div></div>`;
   return `<div class="${cls}" onclick="${isDone?`uncheck('${q.id}')`:`check('${q.id}')`}">
     ${isDone?'':`<button class="playbtn" onclick="event.stopPropagation();openFocus('${q.id}')">▶</button>`}
     <div class="iname">${q.name} <span class="badge ${q.w}">${q.w.toUpperCase()}</span>${q.fromTpl?' <span class="bonus">📋 Vorlage</span>':''}${runChip(q.id)}
@@ -1018,6 +1028,7 @@ function renderQL(){
   const avg=n=>{const s=S.history.slice(-n);return s.length?Math.round(s.reduce((a,x)=>a+x.score,0)/s.length):null};
   $('#qlAvg').innerHTML='Ø3 <b class="mono">'+fmt0(avg(3))+'</b> · Ø7 <b class="mono">'+fmt0(avg(7))+'</b> · Ø14 <b class="mono">'+fmt0(avg(14))+'</b> → 🎯 Ziel <b class="mono">'+fmt(S.set.goal)+'</b> ✎';
   $('#qlGoalVal').textContent=fmt(S.set.goal);
+  renderTl();
 }
 function qlSet_min(v){QL.min=+v;renderQL()}
 function qlSet_k(v){QL.k=v;renderQL()}
@@ -1031,6 +1042,63 @@ function qlBook(){
   $('#qlName').value='';
   toast((p>0?'+':'−')+fmt(Math.abs(p))+' P · '+name,p<0);
   renderGroups();
+}
+/* ---------- Heute-Protokoll: alles Gebuchte löschbar (v1.3.1) ---------- */
+let tlOpen=false;
+function renderTl(){
+  const head=$('#tlHead');if(!head)return;
+  head.textContent='🧾 Heute-Protokoll ('+S.day.ledger.length+') '+(tlOpen?'▴':'▾');
+  const tl=$('#tlList');
+  if(!tlOpen){tl.innerHTML='';return}
+  tl.innerHTML=S.day.ledger.map((e,i)=>({e,i})).reverse().map(o=>{
+    const e=o.e,tm=new Date(e.t).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+    return `<div class="tlrow"><em class="mono">${tm}</em><span>${labelOf(e.id,e)}</span><b class="mono" style="color:${e.p<0?'var(--bad)':e.p>0?'var(--ok)':'var(--mut)'}">${e.p<0?'−':e.p>0?'+':''}${e.p?fmt(Math.abs(e.p)):'·'}</b><button class="tldel" onclick="delToday(${o.i})">🗑</button></div>`;
+  }).join('')||'<span class="small">Heute noch nichts gebucht.</span>';
+}
+function delToday(i){
+  const e=S.day.ledger[i];if(!e)return;
+  if(e.kind==='done'||e.kind==='done-auto')delete S.day.checks[e.id];
+  if(e.kind==='tick'||e.kind==='tick-auto'||e.kind==='over-limit')
+    S.day.ticks[e.id]=Math.max(0,(S.day.ticks[e.id]||0)-1);
+  S.day.ledger.splice(i,1);
+  save();toast('🗑 Eintrag entfernt');renderGroups();
+}
+function delTask(id){
+  const q=S.queue.find(x=>x.id===id);if(!q)return;
+  if(!confirm('„'+q.name+'" wirklich löschen? Heutige Punkte dazu werden mit entfernt.'))return;
+  S.queue=S.queue.filter(x=>x.id!==id);
+  for(let i=S.day.ledger.length-1;i>=0;i--){if(S.day.ledger[i].id===id)S.day.ledger.splice(i,1)}
+  delete S.day.checks[id];delete S.day.subs[id];delete S.day.pushed[id];delete S.day.focus[id];delete S.day.ist[id];
+  save();toast('🗑 gelöscht');renderGroups();
+}
+function delItem(id){
+  const it=S.items.find(x=>x.id===id);if(!it)return;
+  if(!confirm('„'+it.name+'" wirklich löschen?'))return;
+  S.items=S.items.filter(x=>x.id!==id);
+  delete S.day.checks[id];delete S.day.ticks[id];delete S.lastDone[id];
+  save();toast('🗑 gelöscht');renderSet();renderGroups();
+}
+/* ---------- Backup Export / Import (v1.3.2) ---------- */
+function expBackup(){
+  try{
+    const blob=new Blob([JSON.stringify(S)],{type:'application/json'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+    a.download=todayStr().slice(2).replace(/-/g,'')+'_Routinen-Backup.json';a.click();
+    toast('💾 Backup exportiert — in „Dateien" sichern');
+  }catch(e){toast('Export fehlgeschlagen',1)}
+}
+function impBackup(inp){
+  const f=inp.files&&inp.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const d=JSON.parse(r.result);
+      if(!d||!d.day||!d.set){toast('Keine gültige Backup-Datei',1);return}
+      if(!confirm('Backup (Stand '+(d.day.date||'?')+') einspielen? Der aktuelle App-Stand wird ersetzt.'))return;
+      S=d;migrate();save();location.reload();
+    }catch(e){toast('Datei konnte nicht gelesen werden',1)}
+  };
+  r.readAsText(f);inp.value='';
 }
 
 /* ---------- Sekunden-Ticks ---------- */
@@ -1060,18 +1128,26 @@ function settleCounters(){
     if(v<=c.limit)log(c.id,ctrHoldPts(c),'hold');
   }
 }
-function buildCSV(){
+function csvFor(d,ledger,ist,pushed,batt,refStr){
   const rows=[['datum','item','typ','gruppe','soll_min','ist_min','punkte_plus','punkte_minus','schiebetage','wert'].join(';')];
-  const d=S.day.date;
+  const live=d===S.day.date;
   const nameOf=id=>{const x=S.items.find(i=>i.id===id)||S.queue.find(q=>q.id===id);return x?x.name.replace(/;/g,','):id};
-  for(const e of S.day.ledger){
+  for(const e of ledger){
     const x=S.items.find(i=>i.id===e.id)||S.queue.find(q=>q.id===e.id)||{};
-    rows.push([d,(e.n?String(e.n).replace(/;/g,','):nameOf(e.id)),x.typ||e.kind,x.gr||'',x.min||e.min||'',S.day.ist[e.id]||'',e.p>0?e.p:'',e.p<0?-e.p:'',S.day.pushed[e.id]||'',
-      e.id==='elvanse'&&S.day.mg.elvanse?S.day.mg.elvanse+'mg':x.ctype==='limit'?(S.day.ticks[e.id]||0)+'/'+x.limit:e.kind].join(';'));
+    rows.push([d,(e.n?String(e.n).replace(/;/g,','):nameOf(e.id)),x.typ||e.kind,x.gr||'',x.min||e.min||'',ist[e.id]||'',e.p>0?e.p:'',e.p<0?-e.p:'',pushed[e.id]||'',
+      live&&e.id==='elvanse'&&S.day.mg.elvanse?S.day.mg.elvanse+'mg':live&&x.ctype==='limit'?(S.day.ticks[e.id]||0)+'/'+x.limit:e.kind].join(';'));
   }
-  rows.push([d,'akku','system','','','','','','',(S.day.battery)+'%'].join(';'));
-  rows.push([d,'reflexion','system','','','','','','','E'+$('#refE').value+'/S'+$('#refS').value+'/M'+$('#refM').value].join(';'));
+  if(batt!=null)rows.push([d,'akku','system','','','','','','',batt+'%'].join(';'));
+  if(refStr)rows.push([d,'reflexion','system','','','','','','',refStr].join(';'));
   return rows.join('\n');
+}
+function buildCSV(){return csvFor(S.day.date,S.day.ledger,S.day.ist,S.day.pushed,S.day.battery,'E'+$('#refE').value+'/S'+$('#refS').value+'/M'+$('#refM').value)}
+function dlCsv(csv,dateStr){
+  const d=dateStr.slice(2).replace(/-/g,'');
+  try{
+    const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=d+'_Routinen.csv';a.click();
+  }catch(e){}
 }
 function openFinish(){
   settleCounters();
@@ -1084,12 +1160,7 @@ function openFinish(){
   $('#finSheet').classList.add('show');renderGroups();
 }
 function finishDay(){
-  const csv=buildCSV();
-  const d=S.day.date.slice(2).replace(/-/g,'');
-  try{
-    const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
-    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=d+'_Routinen.csv';a.click();
-  }catch(e){}
+  dlCsv(buildCSV(),S.day.date);
   const sum=daySummary();
   S.day.refE=+$('#refE').value;
   S.history.push({date:S.day.date,score:sum.score,plus:sum.plus,minus:sum.minus,refE:S.day.refE,refS:+$('#refS').value,refM:+$('#refM').value,
@@ -1134,6 +1205,42 @@ function drawCurve(vals,goal){
    <circle cx="360" cy="${Y(last).toFixed(1)}" r="4" fill="#3ecf8e"/>`;
 }
 function kpiHtml(a){return a.map(x=>`<div class="card"><span class="small">${x.l}</span><br><b class="mono">${x.v}</b></div>`).join('')}
+/* ---------- Vergangene Tage bearbeiten (v1.3.1) ---------- */
+let PD=null;
+function histOf(date){return S.history.find(h=>h.date===date)}
+function pdNach(date){PD=(PD&&PD.date===date&&PD.mode==='nach')?null:{date,mode:'nach',sign:1,min:15,k:'leicht'};renderStats()}
+function pdList(date){PD=(PD&&PD.date===date&&PD.mode==='list')?null:{date,mode:'list'};renderStats()}
+function pdHtml(e){
+  if(!PD||PD.date!==e.date)return'';
+  if(PD.mode==='list'){
+    return '<div style="margin-top:6px">'+(e.ledger||[]).map((x,i)=>`<div class="tlrow"><span>${labelOf(x.id,x)}</span><b class="mono" style="color:${x.p<0?'var(--bad)':x.p>0?'var(--ok)':'var(--mut)'}">${x.p<0?'−':x.p>0?'+':''}${x.p?fmt(Math.abs(x.p)):'·'}</b><button class="tldel" onclick="pdDel('${e.date}',${i})">🗑</button></div>`).join('')+'</div>';
+  }
+  return `<div style="margin-top:6px">
+    <div class="ql-row"><button class="ql-sign ${PD.sign<0?'neg':''}" onclick="PD.sign*=-1;renderStats()">${PD.sign>0?'＋':'−'}</button>
+    <input type="number" inputmode="numeric" min="1" max="960" value="${PD.min}" placeholder="Min" oninput="PD.min=Math.max(1,Math.min(960,+this.value||1))"></div>
+    <div class="mg">${['leicht','mittel','schwer'].map(k=>`<button class="${PD.k===k?'sel':''}" onclick="PD.k='${k}';renderStats()">${k}</button>`).join('')}</div>
+    <button class="ql-book ${PD.sign<0?'neg':''}" style="margin-top:7px" onclick="pdBook('${e.date}')">Nachtrag buchen</button></div>`;
+}
+function pdBook(date){
+  const h=histOf(date);if(!h||!PD)return;
+  const p=Math.max(1,Math.round((PD.min/5)*KV[PD.k]))*SCALE*PD.sign;
+  (h.ledger=h.ledger||[]).push({t:now(),id:'quick',p,kind:'nach',n:'Nachtrag',min:PD.min,k:PD.k});
+  if(p>=0)h.plus=(h.plus||0)+p;else h.minus=(h.minus||0)-p;
+  h.score=(h.plus||0)-(h.minus||0);h.edited=true;PD=null;
+  save();toast((p>0?'+':'−')+fmt(Math.abs(p))+' P nachgetragen');renderStats();renderHeader();
+}
+function pdDel(date,i){
+  const h=histOf(date);if(!h||!h.ledger)return;
+  const x=h.ledger[i];if(!x)return;
+  h.ledger.splice(i,1);
+  if(x.p>=0)h.plus=Math.max(0,(h.plus||0)-x.p);else h.minus=Math.max(0,(h.minus||0)+x.p);
+  h.score=(h.plus||0)-(h.minus||0);h.edited=true;
+  save();toast('🗑 Eintrag entfernt · Tag neu berechnet');renderStats();renderHeader();
+}
+function pdCsv(date){
+  const h=histOf(date);if(!h||!h.ledger)return;
+  dlCsv(csvFor(date,h.ledger,h.ist||{},h.pushed||{},null,h.refE!=null?('E'+h.refE+'/S'+(h.refS??'')+'/M'+(h.refM??'')):''),date);
+}
 function renderStats(){
   const goal=S.set.goal,E=allEntries();
   let vals=[],kpis=[],list='',title='';
@@ -1153,7 +1260,8 @@ function renderStats(){
         <div><span>Plus / Minus</span><em style="font-style:normal;color:var(--ok)">+${fmt(e.plus||0)}</em> / <em style="font-style:normal;color:var(--bad)">−${fmt(e.minus||0)}</em></div>
         <div><span>Reflexion</span>${e.refE!=null?('⚡ '+e.refE+(e.refS!=null?' · 🙂 '+e.refS:'')+(e.refM!=null?' · 🔥 '+e.refM:'')):'–'}</div>
         <div><span>Fokus-Ist</span>${istM?istM+' Min':'–'}</div>
-        <div><span>Status</span>${e.today?'läuft':e.auto?'auto-geschlossen':'abgeschlossen'}</div>
+        <div><span>Status</span>${e.today?'läuft':e.auto?'auto-geschlossen':'abgeschlossen'}${e.edited?' · korrigiert':''}</div>
+        ${e.today?'':`<div style="grid-column:1/-1"><div class="qact" style="margin-top:0"><button onclick="pdNach('${e.date}')">＋ Nachtrag</button>${(e.ledger&&e.ledger.length)?`<button onclick="pdList('${e.date}')">🧾 Einträge (${e.ledger.length})</button><button onclick="pdCsv('${e.date}')">↺ CSV</button>`:''}</div>${pdHtml(e)}</div>`}
       </div>`}).join('');
   }else if(STV==='wochen'||STV==='monate'){
     const wk=STV==='wochen';
@@ -1212,6 +1320,8 @@ function renderSet(){
   $('#swStreak').classList.toggle('on',S.set.streak);
   $('#swBatt').classList.toggle('on',S.set.battFromRef);
   $('#setCount').textContent=S.items.length+' aktiv';
+  const own=S.items.filter(i=>String(i.id).startsWith('u'));
+  $('#ownList').innerHTML=own.length?('<span class="small">Selbst angelegt — 🗑 löscht endgültig:</span>'+own.map(i=>`<div class="tlrow"><span>${i.name}</span><button class="tldel" onclick="delItem('${i.id}')">🗑</button></div>`).join('')):'';
   $('#setTpl').textContent=S.templates.length+' Vorlagen';
   $('#setHist').textContent=S.history.length+' Tage';
 }
