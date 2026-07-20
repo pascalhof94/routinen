@@ -432,7 +432,7 @@ body{padding-top:calc(max(env(safe-area-inset-top,0px),54px) + 8px)}
   </div>
   <div class="card">
     <h2 style="margin-top:0">🗂 Verwaltung</h2>
-    <div class="row"><span class="lbl">Version</span><span class="small">v1.5.1 · Stream + Punkte-Engine v2</span></div>
+    <div class="row"><span class="lbl">Version</span><span class="small">v1.5.2 · Instant-Aufgaben + Kalender-Planung</span></div>
     <div class="row"><span class="lbl">Aktive Routinen &amp; Counter</span><span class="small" id="setCount"></span></div>
     <div id="ownList"></div>
     <div class="row"><span class="lbl">🎛 Punkte-Tuning je Aufgabe<br><span class="small">Formel überschreiben · eigener Malus · Akku</span></span></div>
@@ -464,6 +464,10 @@ body{padding-top:calc(max(env(safe-area-inset-top,0px),54px) + 8px)}
     <div class="fsub" id="focSub"></div>
     <div class="kchips" id="focK" style="display:none"></div>
     <div class="subrow" id="focSubs" style="text-align:left"></div>
+    <div class="ql-row" id="focAdd" style="display:none;margin-top:8px">
+      <input type="text" id="focAddInp" placeholder="+ Unteraufgabe …">
+      <button class="playbtn" onclick="addFocSub()">＋</button>
+    </div>
     <div class="tacho">
       <svg width="230" height="230" viewBox="0 0 230 230">
         <defs><linearGradient id="tg" x1="0" y1="0" x2="1" y2="1">
@@ -602,6 +606,11 @@ function battCost(it){
   return Math.max(-20,Math.min(20,Math.round(it.min/10*KV[it.k||'leicht']*m)));
 }
 function ctrHoldPts(it){return (it.hold||Math.max(1,Math.round(3*KV[it.k||'leicht']*EV[it.e||'neutral'])))*SCALE}
+/* v1.5.2 Staffel für Build-Counter (Heißgetränk): 1 → +100 · 2 → +50 · 3 → −50 · ab 4 → −100 */
+function buildTickPts(c,v){
+  if(c.id==='hot'||c.taper)return v===1?SCALE:v===2?Math.round(SCALE/2):v===3?-Math.round(SCALE/2):-SCALE;
+  return (c.per||1)*SCALE;
+}
 
 /* ---------- State ---------- */
 const DEFAULTS={goal:5800,malus:1.0,block:6,streak:true,battFromRef:true,goalWE:5800,rateL:5,rateM:10,rateS:15,battAuto:true,homeView:'groups',week:[1,1,1,1,1,0,0]};
@@ -648,7 +657,7 @@ function capHistory(){
   for(let i=0;i<S.history.length-120;i++){delete S.history[i].ledger;delete S.history[i].ist;delete S.history[i].pushed}
 }
 function autoClose(){
-  settleCounters();
+  settleCounters();if(typeof settlePlanned==='function')settlePlanned();
   const sum=daySummary();
   S.history.push({date:S.day.date,score:sum.score,plus:sum.plus,minus:sum.minus,auto:true,ledger:S.day.ledger,ist:S.day.ist,pushed:S.day.pushed});
   capHistory();
@@ -819,7 +828,7 @@ function renderGroups(){
           const cls=v>c.limit?'limit-bad':v===c.limit?'limit-warn':'limit-ok';
           bodyHtml+=`<button class="ctr ${cls}" onclick="tick('${c.id}')"><span class="plus">+</span><span class="minus" onclick="event.stopPropagation();untick('${c.id}')">−</span><span class="cnum mono">${v}<em> / ≤ ${c.limit}</em></span><span class="ctitle">${c.name}</span><span class="cmeta">gehalten +${fmt(ctrHoldPts(c))} · drüber −${fmt(c.malusTick*SCALE)}/Tick</span></button>`;
         }else{
-          bodyHtml+=`<button class="ctr" style="grid-column:1/-1" onclick="tick('${c.id}')"><span class="plus">+</span><span class="minus" onclick="event.stopPropagation();untick('${c.id}')">−</span><span class="cnum mono">${v}<em> Ticks</em></span><span class="ctitle">${c.name}</span><span class="cmeta">+${fmt(c.per*SCALE)} P je Tick · Morgen-Kaffee = Tick 1</span></button>`;
+          bodyHtml+=`<button class="ctr" style="grid-column:1/-1" onclick="tick('${c.id}')"><span class="plus">+</span><span class="minus" onclick="event.stopPropagation();untick('${c.id}')">−</span><span class="cnum mono">${v}<em> Ticks</em></span><span class="ctitle">${c.name}</span><span class="cmeta">${c.id==='hot'||c.taper?'1: +100 · 2: +50 · 3: −50 · ab 4: −100 je':'+'+fmt((c.per||1)*SCALE)+' P je Tick'} · Morgen-Kaffee = Tick 1</span></button>`;
         }
       }
       for(const[fid,f]of Object.entries(S.day.focus)){
@@ -868,14 +877,38 @@ function streamEntries(){
       out.push(it);
     }
   }
-  let qa=840;
   const s=qSorted();
   for(const q of s.open.concat(s.done)){
-    if(S.day.stream[q.id]==null){S.day.stream[q.id]=qa;qa+=Math.max(15,q.min||15)}
-    out.push(q);
+    if(S.day.stream[q.id]!=null)out.push(q);
   }
   save();
   return out;
+}
+/* v1.5.2: Aufgabe in den Kalender legen / herausnehmen */
+function calTgl(id){
+  if(!S.day.stream)S.day.stream={};
+  if(S.day.stream[id]!=null){
+    delete S.day.stream[id];
+    save();toast('📅 aus dem Kalender entfernt — kein Plan-Malus');
+  }else{
+    const nowM=new Date().getHours()*60+new Date().getMinutes();
+    const at=Math.max(ST0,Math.min(ST1-10,Math.round(nowM/5)*5));
+    S.day.stream[id]=at;
+    save();toast('📅 im Kalender · '+stT(at)+' — im Stream ziehen');
+  }
+  renderGroups();
+}
+/* v1.5.2: Beim Tagesabschluss — geplant, aber nicht erledigt = Malus (idempotent).
+   Wird die Aufgabe doch noch erledigt, räumt doCheck den Malus wieder weg. */
+function settlePlanned(){
+  for(const q of S.queue){
+    if(S.day.checks[q.id])continue;
+    if(!S.day.stream||S.day.stream[q.id]==null)continue;
+    if(S.day.ledger.some(e=>e.id===q.id&&e.kind==='plan-missed'))continue;
+    const rate=q.w==='muss'?.2:q.w==='soll'?.1:0;
+    const m=Math.round(calcPts(q)*rate*S.set.malus*malusF(q));
+    if(m>0)log(q.id,-m,'plan-missed',{n:q.name+' · geplant, nicht geschafft'});
+  }
 }
 function renderStream(host){
   const list=streamEntries();
@@ -925,7 +958,7 @@ function renderStream(host){
   }
   sec.innerHTML=`<div class="ghead" style="cursor:default"><span class="ico">🕐</span><span class="gname">Tagesstream</span><span class="gpts mono">${dn} / ${list.length} · Griff ⠿ ziehen = Zeit</span></div>
     <div style="padding:0 12px 14px">${ctr}<div class="stream" style="height:${H}px">${tl}</div>
-    <button class="addbtn" style="margin-top:12px" onclick="startNew()">＋ Neu · Aufgabe / Routine / Counter</button></div>`;
+    <h2 style="margin:16px 2px 8px">📋 Warteschlange · 📅 = im Kalender</h2>${renderQueue()}</div>`;
   host.appendChild(sec);
   bindStreamDrag(sec);
   if(!renderStream._scrolled){renderStream._scrolled=true;
@@ -990,7 +1023,7 @@ function renderItem(it,done){
   if(it.muss)sub=`<span class="badge muss">MUSS</span> `+sub;
   sub+=runChip(it.id);
   const halfBtn=it.half&&!done?`<button class="half" onclick="event.stopPropagation();check('${it.id}',true)">½</button>`:'';
-  const defBtn=it.every&&!done?`<button class="half" onclick="event.stopPropagation();deferItem('${it.id}')">↷</button>`:'';
+  const defBtn=it.every&&!done?`<button class="half" onclick="event.stopPropagation();deferItem('${it.id}')">⤴️</button>`:'';
   const tap=focusable(it)?`onclick="openFocus('${it.id}')"`:'';
   return `<div class="${cls}" ${tap}><div class="iname">${it.name}${sub}${extra}</div><span class="pts">${right}+${fmt(pts)}</span>${defBtn}${halfBtn}<button class="chk" onclick="event.stopPropagation();check('${it.id}')">${done?'✓':''}</button></div>`;
 }
@@ -1002,7 +1035,7 @@ function subTick(id,i){
   if(st.includes(i))return;
   const it=S.items.find(x=>x.id===id)||S.queue.find(x=>x.id===id);
   st.push(i);log(id,SCALE,'substep',{step:i,n:it?it.name+' · Schritt':undefined});toast('+'+SCALE+' P 🎉');
-  if(it&&it.subs&&st.length===it.subs.length&&!S.day.checks[id]){doCheck(it,false,SCALE,' · Abschluss +'+SCALE);if(focId===id)closeFocus(true)}
+  if(it&&it.subs&&st.length===it.subs.length&&!S.day.checks[id]&&!it.instTask){doCheck(it,false,SCALE,' · Abschluss +'+SCALE);if(focId===id)closeFocus(true)}
   else{renderGroups();if(focId===id)renderFocusSubs()}
 }
 function check(id,half){
@@ -1014,7 +1047,7 @@ function check(id,half){
   if(it.subs){
     const st=S.day.subs[id]||[];const rest=it.subs.length-st.length;
     if(rest>0){for(let i=0;i<it.subs.length;i++){if(!st.includes(i))st.push(i)}S.day.subs[id]=st;log(id,rest*SCALE,'substep',{bulk:true,n:it.name+' · Schritte'})}
-    pts=SCALE;note=' · Abschluss';
+    if(!it.instTask){pts=SCALE;note=' · Abschluss'}
   }
   const hm=new Date().getHours()+new Date().getMinutes()/60;
   if(it.until){const lim=parseFloat(it.until);if(hm>lim){pts=0;note=' · nach '+it.until+' → 0 P (kein Malus)'}}
@@ -1025,6 +1058,7 @@ function check(id,half){
 }
 function doCheck(it,half,pts,note){
   const id=it.id;
+  for(let i=S.day.ledger.length-1;i>=0;i--){if(S.day.ledger[i].id===id&&S.day.ledger[i].kind==='plan-missed')S.day.ledger.splice(i,1)}
   /* laufenden Fokus-Timer als Ist-Zeit übernehmen */
   const f=focState(id);
   if(f){const min=Math.max(1,Math.round(focElapsed(f)/60));S.day.ist[id]=(S.day.ist[id]||0)+min;delete S.day.focus[id]}
@@ -1035,8 +1069,8 @@ function doCheck(it,half,pts,note){
   if(it.every)S.lastDone[id]=todayStr();
   if(pts)log(id,pts,'done',{n:it.name});
   if(it.auto&&it.auto.tick){const tc=S.items.find(x=>x.id===it.auto.tick);
-    S.day.ticks[it.auto.tick]=(S.day.ticks[it.auto.tick]||0)+1;
-    log(it.auto.tick,((tc&&tc.per)||1)*SCALE,'tick-auto',{n:tc?tc.name:it.auto.tick})}
+    const tv=(S.day.ticks[it.auto.tick]||0)+1;S.day.ticks[it.auto.tick]=tv;
+    log(it.auto.tick,tc?buildTickPts(tc,tv):SCALE,'tick-auto',{n:tc?tc.name:it.auto.tick})}
   if(it.auto&&it.auto.check){const t=S.items.find(x=>x.id===it.auto.check);
     if(t&&!S.day.checks[t.id]){S.day.checks[t.id]=true;log(t.id,calcPts(t),'done-auto',{n:t.name});setTimeout(()=>toast(t.name+' automatisch mit abgehakt'),2000)}}
   if(it.timerStart){S.day.timers[id]={start:now(),min:it.timerStart}}
@@ -1063,6 +1097,9 @@ function openFocus(id){
   const fk=$('#focK');
   if(ff.inst){fk.style.display='flex';fk.innerHTML=['leicht','mittel','schwer'].map(k=>`<button class="${(ff.k||'leicht')===k?'sel':''}" onclick="S.day.focus['${id}'].k='${k}';save();openFocus('${id}')">${k}</button>`).join('')}
   else fk.style.display='none';
+  const isQ=!!S.queue.find(x=>x.id===id);
+  $('#focAdd').style.display=isQ?'flex':'none';
+  if(it.instTask){$('#focSub').textContent='⏱ Läuft — Ist-Zeit wird Soll · Punkte beim Beenden';$('#focSoll').textContent=''}
   renderFocusSubs();
   $('#focusSheet').classList.add('show');
   renderFocus();renderGroups();
@@ -1090,7 +1127,11 @@ function renderFocus(){
 }
 function focToggle(){
   const f=focState(focId);if(!f)return;
-  if(f.running){f.elapsed=focElapsed(f);f.running=false}
+  if(f.running){
+    f.elapsed=focElapsed(f);f.running=false;
+    const q=S.queue.find(x=>x.id===focId);
+    if(q&&q.instTask){save();closeFocus(true);toast('⏸ pausiert — wartet als MUSS in der Warteschlange');renderGroups();return}
+  }
   else{f.running=true;f.start=now()}
   save();renderFocus();renderGroups();
 }
@@ -1103,16 +1144,33 @@ function focDone(){
     delete S.day.focus[id];save();
     closeFocus(true);toast('⏱ +'+fmt(p)+' P · '+min+' Min');renderGroups();return;
   }
+  const q=S.queue.find(x=>x.id===id);
+  if(q&&q.instTask&&!S.day.checks[id]&&f){
+    q.min=Math.max(1,Math.round(focElapsed(f)/60));
+    closeFocus(true);
+    check(id);
+    editTask(id);
+    return;
+  }
   closeFocus(true);
   check(id);
 }
-/* v1.5 Instant-Timer (B2): Titel eingeben → Timer läuft → Beenden vergibt Punkte */
+/* v1.5.2 Instant-Timer: legt sofort eine echte MUSS-Aufgabe an und öffnet den Tacho.
+   Pause → wartet in der Warteschlange. Beenden → Ist-Minuten werden Soll, Punkte gutgeschrieben,
+   danach öffnen sich die Einstellmöglichkeiten (rückwirkende Korrektur inklusive). */
 function instStart(){
-  const name=$('#qlName').value.trim()||'⏱ Timer';
-  const id='inst'+now();
-  S.day.focus[id]={elapsed:0,running:true,start:now(),n:name,inst:true,k:QL.k};
+  const name=$('#qlName').value.trim()||'⏱ Neue Aufgabe';
+  const id='u'+now();
+  S.queue.push({id,typ:'aufgabe',name,min:15,k:QL.k,e:'neutral',w:'muss',instTask:true});
+  S.day.focus[id]={elapsed:0,running:true,start:now()};
   $('#qlName').value='';save();
-  toast('⏱ Timer läuft · '+name);renderGroups();
+  openFocus(id);
+}
+function addFocSub(){
+  const q=S.queue.find(x=>x.id===focId);if(!q)return;
+  const t=$('#focAddInp').value.trim();if(!t)return;
+  (q.subs=q.subs||[]).push(t);$('#focAddInp').value='';
+  save();renderFocusSubs();renderGroups();
 }
 function closeFocus(silent){
   $('#focusSheet').classList.remove('show');focId=null;
@@ -1123,7 +1181,8 @@ function closeFocus(silent){
 function tick(id){
   const c=S.items.find(x=>x.id===id);
   const v=(S.day.ticks[id]||0)+1;S.day.ticks[id]=v;
-  if(c.ctype==='build'){log(id,c.per*SCALE,'tick');toast('+'+fmt(c.per*SCALE)+' P')}
+  if(c.ctype==='build'){const p=buildTickPts(c,v);log(id,p,'tick',{n:c.name});
+    toast((p>=0?'+'+fmt(p):'−'+fmt(-p))+' P · '+c.name+' #'+v,p<0)}
   else{
     if(v>c.limit){const esc=Math.pow(1.5,v-c.limit-1);
       const m=Math.min(50000,Math.round(c.malusTick*S.set.malus*malusF(c)*esc*SCALE));
@@ -1138,7 +1197,7 @@ function untick(id){
   const c=S.items.find(x=>x.id===id);
   const v=S.day.ticks[id]||0;
   if(!c||v===0)return;
-  if(c.ctype==='build'){log(id,-c.per*SCALE,'tick-undo')}
+  if(c.ctype==='build'){log(id,-buildTickPts(c,v),'tick-undo',{n:c.name})}
   else if(v>c.limit){const esc=Math.pow(1.5,v-c.limit-1);
     log(id,Math.min(50000,Math.round(c.malusTick*S.set.malus*malusF(c)*esc*SCALE)),'tick-undo')}
   else{log(id,0,'tick-undo')}
@@ -1164,9 +1223,9 @@ function qCard(q,isDone){
   const subsRow=q.subs?'<div class="subrow">'+q.subs.map((s,i)=>`<button class="${(S.day.subs[q.id]||[]).includes(i)?'on':''}" onclick="event.stopPropagation();subTick('${q.id}',${i})">${(S.day.subs[q.id]||[]).includes(i)?'✓':'○'} ${s}<span class="sp">+${SCALE}</span></button>`).join('')+'</div>':'';
   const det=`<div class="qdetail${exp?' show':''}"><div class="qact">${isDone?
     `<button onclick="event.stopPropagation();uncheck('${q.id}')">↩︎ wieder offen</button><button onclick="event.stopPropagation();editTask('${q.id}')">✎ Bearbeiten (rückwirkend)</button><button style="color:var(--bad);border-color:rgba(246,109,109,.5)" onclick="event.stopPropagation();delTask('${q.id}')">🗑 Löschen</button>`:
-    `<button onclick="event.stopPropagation();pushTask('${q.id}')">→ schieben</button><button onclick="event.stopPropagation();editTask('${q.id}')">✎ Bearbeiten</button><button style="color:var(--bad);border-color:rgba(246,109,109,.5)" onclick="event.stopPropagation();delTask('${q.id}')">🗑 Löschen</button>`}</div></div>`;
+    `<button onclick="event.stopPropagation();pushTask('${q.id}')">⤴️ schieben</button><button onclick="event.stopPropagation();editTask('${q.id}')">✎ Bearbeiten</button><button style="color:var(--bad);border-color:rgba(246,109,109,.5)" onclick="event.stopPropagation();delTask('${q.id}')">🗑 Löschen</button>`}</div></div>`;
   return `<div class="${cls}" onclick="${isDone?`uncheck('${q.id}')`:`check('${q.id}')`}">
-    ${isDone?'':`<button class="playbtn" onclick="event.stopPropagation();openFocus('${q.id}')">▶</button>`}
+    ${isDone?'':`<button class="playbtn" onclick="event.stopPropagation();openFocus('${q.id}')">▶</button><button class="playbtn" style="${(S.day.stream&&S.day.stream[q.id]!=null)?'border-color:rgba(62,207,142,.55);color:var(--ok);background:rgba(62,207,142,.1)':''}" onclick="event.stopPropagation();calTgl('${q.id}')">📅</button>`}
     <div class="iname">${q.name} <span class="badge ${q.w}">${q.w.toUpperCase()}</span>${q.fromTpl?' <span class="bonus">📋 Vorlage</span>':''}${runChip(q.id)}
     <span class="isub">${q.min} Min · ${q.k} · ${q.e} → ${fmt(pts)} P${isDone?' · Tipp = wieder offen':''}</span>
     ${pd?`<span class="malus">${pd}× geschoben · Malus −${fmt(mal)} P (−${rate*100} %/Tag)</span>`:''}
@@ -1198,7 +1257,7 @@ function pushTask(id){
   const rate=q.w==='muss'?.2:q.w==='soll'?.1:0;
   const prop=Math.round(calcPts(q)*rate*S.set.malus*malusF(q));
   PUSH={id,mode:'task',val:prop,max:Math.max(prop*2,100)};
-  $('#pushTitle').textContent='→ „'+q.name+'“ schieben';
+  $('#pushTitle').textContent='⤴️ „'+q.name+'“ schieben';
   $('#pushSub').textContent=q.w.toUpperCase()+' · Vorschlag: −'+fmt(prop)+' P Malus — per Regler anpassbar';
   renderPush();$('#pushSheet').classList.add('show');
 }
@@ -1206,7 +1265,7 @@ function deferItem(id){
   const it=S.items.find(x=>x.id===id);if(!it||!it.every)return;
   const days=[];for(let n=1;n<=Math.max(it.every+3,4);n++)days.push(n);
   PUSH={id,mode:'defer',val:1,days};
-  $('#pushTitle').textContent='↷ „'+it.name+'“ verschieben';
+  $('#pushTitle').textContent='⤴️ „'+it.name+'“ verschieben';
   $('#pushSub').textContent='Rhythmus alle '+it.every+' Tage — wann soll es fällig sein? Der Zyklus beginnt dort neu.';
   renderPush();$('#pushSheet').classList.add('show');
 }
@@ -1215,10 +1274,10 @@ function renderPush(){
   if(PUSH.mode==='task'){
     $('#pushBody').innerHTML=`<div class="tunerow"><span class="small">Malus: <b class="mono" style="color:var(--bad)">−${fmt(PUSH.val)} P</b></span>
       <input type="range" class="slider" min="0" max="${PUSH.max}" step="5" value="${PUSH.val}" oninput="PUSH.val=+this.value;renderPush()"></div>`;
-    $('#pushGo').textContent='→ Schieben · −'+fmt(PUSH.val)+' P';
+    $('#pushGo').textContent='⤴️ Schieben · −'+fmt(PUSH.val)+' P';
   }else{
     $('#pushBody').innerHTML='<div class="chips" style="margin-top:10px">'+PUSH.days.map(n=>`<button class="${PUSH.val===n?'sel':''}" onclick="PUSH.val=${n};renderPush()">in ${n} T</button>`).join('')+'</div>';
-    $('#pushGo').textContent='↷ Fällig in '+PUSH.val+' Tag'+(PUSH.val>1?'en':'');
+    $('#pushGo').textContent='⤴️ Fällig in '+PUSH.val+' Tag'+(PUSH.val>1?'en':'');
   }
 }
 function pushConfirm(){
@@ -1235,7 +1294,7 @@ function pushConfirm(){
     if(it&&it.every){
       const d=new Date(todayStr()+'T12:00');d.setDate(d.getDate()+PUSH.val-it.every);
       S.lastDone[it.id]=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-      toast('↷ '+it.name+' fällig in '+PUSH.val+' T — Zyklus startet dort');
+      toast('⤴️ '+it.name+' fällig in '+PUSH.val+' T — Zyklus startet dort');
     }
   }
   closePush();save();renderGroups();
@@ -1474,7 +1533,7 @@ function dlCsv(csv,dateStr){
   }catch(e){}
 }
 function openFinish(){
-  settleCounters();
+  settleCounters();settlePlanned();
   if(!S.day.checks.reflexion){S.day.checks.reflexion=true;log('reflexion',calcPts(S.items.find(i=>i.id==='reflexion')),'done')}
   const sum=daySummary();
   $('#finTitle').textContent='🌇 Tagesbilanz · '+fmtDate();
