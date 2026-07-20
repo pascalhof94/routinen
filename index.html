@@ -43,7 +43,7 @@ header{display:flex;align-items:center;gap:16px;margin:6px 0 18px}
 .batt-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
 .batt-num{font-size:1.25rem;font-weight:800}
 .batt-num em{font-style:normal;font-size:.68rem;color:var(--mut);font-weight:500}
-.batt-shell{height:26px;border-radius:13px;border:1px solid var(--line);background:#0b111c;position:relative;overflow:hidden}
+.batt-shell{height:26px;border-radius:13px;border:1px solid var(--line);background:#0b111c;position:relative;overflow:hidden;touch-action:none;cursor:grab}
 .batt-fill{position:absolute;inset:2px auto 2px 2px;border-radius:11px;transition:width .5s cubic-bezier(.4,0,.2,1);
   background:linear-gradient(100deg,#2bb87f,#3ecf8e 45%,#7fe6b8);background-size:200% 100%;animation:liquid 5s ease-in-out infinite alternate}
 .batt-fill.low{background:linear-gradient(100deg,#d84f4f,#f66d6d 50%,#ff9d8a);background-size:200% 100%}
@@ -301,8 +301,8 @@ body{padding-top:calc(max(env(safe-area-inset-top,0px),54px) + 8px)}
   </header>
 
   <div class="battery-card">
-    <div class="batt-top"><b>🔋 Energie</b><span class="batt-num mono" id="battNum"></span></div>
-    <div class="batt-shell"><div class="batt-fill" id="battFill"></div><div class="batt-block" id="bSegM" style="background:repeating-linear-gradient(-55deg,rgba(246,109,109,.85) 0 6px,rgba(246,109,109,.5) 6px 12px)"></div><div class="batt-block" id="bSegS"></div><div class="batt-block" id="bSegR" style="background:repeating-linear-gradient(-55deg,rgba(185,138,247,.8) 0 6px,rgba(185,138,247,.45) 6px 12px)"></div></div>
+    <div class="batt-top"><b>🔋 Energie <span class="small">· Balken ziehen = setzen</span></b><span class="batt-num mono" id="battNum"></span></div>
+    <div class="batt-shell" id="battShell"><div class="batt-fill" id="battFill"></div><div class="batt-block" id="bSegM" style="background:repeating-linear-gradient(-55deg,rgba(246,109,109,.85) 0 6px,rgba(246,109,109,.5) 6px 12px)"></div><div class="batt-block" id="bSegS"></div><div class="batt-block" id="bSegR" style="background:repeating-linear-gradient(-55deg,rgba(185,138,247,.8) 0 6px,rgba(185,138,247,.45) 6px 12px)"></div></div>
     <div class="legend">
       <span><i class="dot" style="background:var(--ok)"></i>verfügbar</span>
       <span><i class="dot" style="background:var(--bad)"></i>Muss blockt</span>
@@ -432,7 +432,7 @@ body{padding-top:calc(max(env(safe-area-inset-top,0px),54px) + 8px)}
   </div>
   <div class="card">
     <h2 style="margin-top:0">🗂 Verwaltung</h2>
-    <div class="row"><span class="lbl">Version</span><span class="small">v1.5.0 · Stream + Punkte-Engine v2</span></div>
+    <div class="row"><span class="lbl">Version</span><span class="small">v1.5.1 · Stream + Punkte-Engine v2</span></div>
     <div class="row"><span class="lbl">Aktive Routinen &amp; Counter</span><span class="small" id="setCount"></span></div>
     <div id="ownList"></div>
     <div class="row"><span class="lbl">🎛 Punkte-Tuning je Aufgabe<br><span class="small">Formel überschreiben · eigener Malus · Akku</span></span></div>
@@ -744,8 +744,28 @@ function battWhyShow(){
   const w=$('#battWhy');if(!w)return;
   w.style.display='flex';
   w.innerHTML='<span class="bw-l">Grund für '+(battPend>0?'+':'')+battPend+' %? (fürs Protokoll)</span>'+
-    ['😴 müde','🍽 Essen','☕ Pause','🚶 Bewegung','🤯 Stress','💪 Schub'].map(x=>`<button onclick="battWhy('${x}')">${x}</button>`).join('')+
+    ['🌅 Tagesstart','😴 müde','🍽 Essen','☕ Pause','🚶 Bewegung','🤯 Stress','💪 Schub'].map(x=>`<button onclick="battWhy('${x}')">${x}</button>`).join('')+
     '<button onclick="battWhy(null)">✕ ohne</button>';
+}
+/* v1.5.1: Akku-Balken ziehen = Energie direkt setzen */
+function bindBattDrag(){
+  const sh=document.getElementById('battShell');if(!sh)return;
+  const setFromX=e=>{
+    const r=sh.getBoundingClientRect();
+    const pct=Math.max(0,Math.min(100,Math.round((e.clientX-r.left)/r.width*100/5)*5));
+    battPend+=pct-S.day.battery;
+    S.day.battery=pct;renderBatt();
+  };
+  sh.addEventListener('pointerdown',ev=>{
+    ev.preventDefault();
+    setFromX(ev);
+    try{sh.setPointerCapture(ev.pointerId)}catch(e){}
+    const mv=e=>setFromX(e);
+    const up=()=>{save();if(battPend!==0)battWhyShow();
+      sh.removeEventListener('pointermove',mv);sh.removeEventListener('pointerup',up);sh.removeEventListener('pointercancel',up)};
+    sh.addEventListener('pointermove',mv);
+    sh.addEventListener('pointerup',up);sh.addEventListener('pointercancel',up);
+  });
 }
 function battWhy(why){
   const lbl='🔋 '+(battPend>0?'+':'')+battPend+' %'+(why?' · '+why:'');
@@ -835,7 +855,7 @@ function renderGroups(){
 function tgGroup(id,h){openState[id]=!openState[id];h.parentElement.classList.toggle('open')}
 
 /* ---------- Tagesstream (v1.5 · A1): alles fließt mit dem Tag ---------- */
-const ST0=6*60,ST1=24*60,HPX=56;
+const ST0=6*60,ST1=24*60,HPX=88,CARDH=52;
 function stT(m){return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0')}
 function streamEntries(){
   if(!S.day.stream)S.day.stream={};
@@ -872,16 +892,26 @@ function renderStream(host){
     ctr+=`<button class="ctr ftile" onclick="openFocus('${fid}')"><span class="cnum mono" style="color:var(--cyan)"><span id="runt-${fid}">${fmtMS(focElapsed(f))}</span></span><span class="ctitle">${f.running?'▶':'⏸'} ${fit?fit.name:(f.n||'⏱ Timer')}</span></button>`;
   }
   ctr+='</div>';
-  const H=(ST1-ST0)/60*HPX;
   let tl='';
-  for(let m=ST0;m<=ST1;m+=60){const y=(m-ST0)/60*HPX;
-    tl+=`<div class="st-hour" style="top:${y}px">${String(m/60).padStart(2,'0')}:00</div><div class="st-line" style="top:${y}px"></div>`}
   const nowM=new Date().getHours()*60+new Date().getMinutes();
-  if(nowM>=ST0&&nowM<=ST1)tl+=`<div class="st-now" id="stNow" style="top:${(nowM-ST0)/60*HPX}px"></div>`;
-  let dn=0;
+  /* v1.5.1: Push-down-Layout — Zeit bestimmt die Reihenfolge, aber Karten schieben sich
+     nach unten, statt sich zu überlappen. Jede Aufgabe ist immer voll lesbar. */
+  list.sort((a,b)=>(S.day.stream[a.id]??ST0)-(S.day.stream[b.id]??ST0));
+  let dn=0,bottom=0,maxY=0;
+  const pos={};
   for(const it of list){
     const at=Math.max(ST0,Math.min(ST1-10,S.day.stream[it.id]??ST0));
-    const y=(at-ST0)/60*HPX,hh=Math.max(34,(it.min||10)/60*HPX);
+    const hh=Math.max(CARDH,(it.min||10)/60*HPX);
+    const y=Math.max((at-ST0)/60*HPX,bottom+6);
+    pos[it.id]={y,hh};bottom=y+hh;if(bottom>maxY)maxY=bottom;
+  }
+  const H=Math.max((ST1-ST0)/60*HPX,maxY+24);
+  for(let m=ST0;m<=ST1;m+=60){const y=(m-ST0)/60*HPX;
+    tl+=`<div class="st-hour" style="top:${y}px">${String(m/60).padStart(2,'0')}:00</div><div class="st-line" style="top:${y}px"></div>`}
+  if(nowM>=ST0&&nowM<=ST1)tl+=`<div class="st-now" id="stNow" style="top:${(nowM-ST0)/60*HPX}px"></div>`;
+  for(const it of list){
+    const at=Math.max(ST0,Math.min(ST1-10,S.day.stream[it.id]??ST0));
+    const y=pos[it.id].y,hh=pos[it.id].hh;
     const done=!!S.day.checks[it.id];if(done)dn++;
     let cls='st-card'+(done?' done':'');
     if(!done&&it.w==='muss')cls+=' b-bad';else if(!done&&it.w==='soll')cls+=' b-warn';
@@ -916,7 +946,7 @@ function bindStreamDrag(sec){
         card.style.top=((at-ST0)/60*HPX)+'px';
         const l=card.querySelector('[data-at]');if(l)l.textContent=stT(at);
       };
-      const up=()=>{card.classList.remove('drag');save();
+      const up=()=>{card.classList.remove('drag');save();renderGroups();
         g.removeEventListener('pointermove',mv);g.removeEventListener('pointerup',up);g.removeEventListener('pointercancel',up)};
       g.addEventListener('pointermove',mv);
       g.addEventListener('pointerup',up);g.addEventListener('pointercancel',up);
@@ -978,7 +1008,7 @@ function subTick(id,i){
 function check(id,half){
   const it=S.items.find(x=>x.id===id)||S.queue.find(x=>x.id===id);
   if(!it||S.day.checks[id])return;
-  if(it.viaFinish){openFinish();return}
+  if(it.viaFinish){toast('📝 Kommt beim Tag abschließen — Button unten');return}
   let pts=calcPts(it),note='';
   if(half){pts=Math.round(pts/2);note=' (halb)'}
   if(it.subs){
@@ -1454,6 +1484,8 @@ function openFinish(){
   $('#finSheet').classList.add('show');renderGroups();
 }
 function finishDay(){
+  if(finishDay._busy)return;
+  finishDay._busy=true;setTimeout(()=>{finishDay._busy=false},3000);
   dlCsv(buildCSV(),S.day.date);
   const sum=daySummary();
   S.day.refE=+$('#refE').value;
@@ -1472,7 +1504,8 @@ function finishDay(){
 let STV='tage';const dExp={};
 function statTab(t,btn){STV=t;document.querySelectorAll('#statSeg button').forEach(b=>b.classList.toggle('on',b===btn));renderStats()}
 function labelOf(id,e){if(e&&e.n)return e.n;if(id==='quick')return'⚡ Quick';if(id==='session')return'💼 Session';if(id==='streak')return'🔥 Streak';
-  const x=S.items.find(i=>i.id===id)||S.queue.find(q=>q.id===id);return x?x.name:id}
+  const x=S.items.find(i=>i.id===id)||S.queue.find(q=>q.id===id);
+  return x?x.name:(String(id).startsWith('u')?'🗑 Gelöschte Aufgabe':id)}
 function allEntries(){const sum=daySummary();
   return[...S.history,{date:S.day.date,score:sum.score,plus:sum.plus,minus:sum.minus,today:true,ledger:S.day.ledger,ist:S.day.ist,refE:S.day.refE}]}
 function isoW(ds){const d=new Date(ds+'T12:00'),t=new Date(d);t.setDate(d.getDate()+3-((d.getDay()+6)%7));
@@ -1675,7 +1708,7 @@ setInterval(()=>{
   const sum=daySummary();
   if(sum.score>=goalFor(S.day.date)&&!S.day.ledger.some(e=>e.kind==='streak')){log('streak',3*SCALE,'streak');toast('🔥 Tagesziel erreicht · +'+fmt(3*SCALE)+' Streak-Bonus');renderGroups()}
 },4000);
-renderGroups();renderSession();renderSet();
+renderGroups();renderSession();renderSet();bindBattDrag();
 /* Offline-Fähigkeit: Service Worker (guarded) */
 if('serviceWorker'in navigator){try{navigator.serviceWorker.register('sw.js')}catch(e){}}
 </script>
